@@ -159,6 +159,23 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+  .rank-next {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+  .rank-next strong {
+    color: var(--c1);
+    font-weight: 700;
+  }
+  .rank-next.maxed {
+    color: var(--c2);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+  }
 
   /* Show only the active tier's badge */
   .rank-hero[data-tier="1"]  .rank-icon svg.tier-iron        { display: block; }
@@ -631,6 +648,22 @@
   }
   .sticky-bar[data-tier="10"] .sticky-progress-fill {
     background: linear-gradient(90deg, #fbbf24, #fef3c7, #dc2626);
+  }
+  .sticky-next {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .sticky-next strong {
+    color: var(--c1);
+    font-weight: 800;
+  }
+  .sticky-next.maxed {
+    color: var(--c2);
+    font-weight: 800;
   }
   @media (prefers-reduced-motion: reduce) {
     .sticky-bar { transition: none; }
@@ -1253,6 +1286,7 @@
     <div class="rank-text">
       <div class="rank-tier" id="rankTier">IRON IV</div>
       <div class="rank-name" id="rankLabel">Mall Civilian</div>
+      <div class="rank-next" id="rankNext"></div>
     </div>
   </div>
 
@@ -1301,6 +1335,7 @@
         <div class="sticky-progress-bar">
           <div class="sticky-progress-fill" id="stickyFill"></div>
         </div>
+        <div class="sticky-next" id="stickyNext"></div>
       </div>
     </div>
   </div>
@@ -1384,6 +1419,7 @@
   const rankBadge = document.getElementById("rankBadge");
   const rankLabelEl = document.getElementById("rankLabel");
   const rankTierEl = document.getElementById("rankTier");
+  const rankNextEl = document.getElementById("rankNext");
   const headerEl = document.querySelector("header");
 
   // Sticky-bar refs — mirror the rank hero + ring as a compact anchored
@@ -1395,6 +1431,7 @@
   const stickyPctEl = document.getElementById("stickyPct");
   const stickyCountEl = document.getElementById("stickyCount");
   const stickyFillEl = document.getElementById("stickyFill");
+  const stickyNextEl = document.getElementById("stickyNext");
 
   // Map tier number → the SVG class used inside .rank-icon so we can
   // clone the right badge into the sticky bar on tier changes. Also
@@ -1436,6 +1473,25 @@
       league: `${tier.name} ${div}`,
       name: tier.silly,
     };
+  }
+
+  // How many more visits are needed to reach the next tier (e.g. Iron → Bronze)
+  // and the name of that tier. Returns null at max tier or with no active
+  // restaurants.
+  function visitsToNextTier(done, total) {
+    if (total === 0) return null;
+    const STEPS = TIERS.length * DIVISIONS.length;
+    const step = Math.floor((done / total) * STEPS);
+    const tierIdx = Math.min(TIERS.length - 1, Math.floor(step / DIVISIONS.length));
+    if (tierIdx >= TIERS.length - 1) return null;
+    const nextTier = TIERS[tierIdx + 1];
+    const threshold = Math.ceil(((tierIdx + 1) / TIERS.length) * total);
+    return { count: Math.max(1, threshold - done), name: nextTier.name };
+  }
+
+  // Title-case a tier name like "EMERALD" → "Emerald".
+  function titleCase(s) {
+    return s.charAt(0) + s.slice(1).toLowerCase();
   }
 
   // ===== Render =====
@@ -1559,7 +1615,16 @@
     rankTierEl.textContent = rank.league;
     rankLabelEl.textContent = rank.name;
 
-    syncStickyBar(rank, pctInt, done, total);
+    const next = visitsToNextTier(done, total);
+    if (next === null) {
+      rankNextEl.textContent = total > 0 ? "Max tier" : "";
+      rankNextEl.classList.toggle("maxed", total > 0);
+    } else {
+      rankNextEl.innerHTML = `<strong>${next.count}</strong> to ${titleCase(next.name)}`;
+      rankNextEl.classList.remove("maxed");
+    }
+
+    syncStickyBar(rank, pctInt, done, total, next);
 
     const complete = done === total && total > 0;
     ringLabel.classList.toggle("complete", complete);
@@ -1575,7 +1640,7 @@
   // duplicate the ten tier badges in the DOM — the cloned SVG resolves
   // its gradient `url(#...)` refs against the originals already in
   // the document.
-  function syncStickyBar(rank, pctInt, done, total) {
+  function syncStickyBar(rank, pctInt, done, total, next) {
     if (!stickyBar) return;
     stickyBar.dataset.tier = rank.tier;
     stickyTierEl.textContent = rank.league;
@@ -1583,6 +1648,16 @@
     stickyPctEl.textContent = pctInt + "%";
     stickyCountEl.textContent = `${done} / ${total}`;
     stickyFillEl.style.width = pctInt + "%";
+
+    if (stickyNextEl) {
+      if (next === null) {
+        stickyNextEl.textContent = total > 0 ? "Max tier" : "";
+        stickyNextEl.classList.toggle("maxed", total > 0);
+      } else {
+        stickyNextEl.innerHTML = `<strong>${next.count}</strong> to ${titleCase(next.name)}`;
+        stickyNextEl.classList.remove("maxed");
+      }
+    }
 
     if (stickyRankIcon.dataset.tier !== String(rank.tier)) {
       stickyRankIcon.dataset.tier = String(rank.tier);
