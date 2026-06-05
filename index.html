@@ -1632,6 +1632,7 @@
     ring.style.stroke = complete ? "url(#ringGoldGradient)" : "url(#ringGradient)";
 
     maybeFireMilestone(done, total);
+    maybeFireRankUp(done, total);
     maybeFirePromotion(rank);
   }
 
@@ -1848,6 +1849,49 @@
     }
     if (reached > lastMilestone) fireMilestone(reached);
     lastMilestone = reached;
+  }
+
+  // ===== Rank-up confetti =====
+  // Smaller burst each time the user advances one step on the 40-step
+  // ladder (Iron IV → Iron III, etc.). Origin tracks the sticky bar when
+  // it's visible (so the burst feels anchored to the rank readout the
+  // user is actually looking at), and falls back to the ring otherwise.
+  let lastStep = 0;
+  let stepInit = false;
+  function maybeFireRankUp(done, total) {
+    if (DEBUG) return;
+    if (total === 0) return;
+    const STEPS = TIERS.length * DIVISIONS.length;
+    const step = Math.min(STEPS - 1, Math.floor((done / total) * STEPS));
+    if (!stepInit) {
+      lastStep = step;
+      stepInit = true;
+      return;
+    }
+    if (step > lastStep) fireRankUp();
+    lastStep = step;
+  }
+
+  function fireRankUp() {
+    if (reducedMotion) return;
+    const fromSticky = stickyBar?.classList.contains("visible");
+    if (fromSticky) {
+      // Burst out of the sticky bar's bottom edge with a wide downward
+      // fan so particles cascade into the page instead of off the top.
+      const rect = stickyBar.getBoundingClientRect();
+      spawnConfetti({
+        count: 55,
+        x: rect.left + rect.width / 2,
+        y: rect.bottom - 4,
+        angle: Math.PI / 2,        // straight down
+        spread: Math.PI * 0.95,    // ~170° fan
+        power: 1.1,
+      });
+    } else {
+      // Hero is on-screen — omnidirectional pop from the ring center.
+      const c = ringCenter();
+      spawnConfetti({ count: 55, x: c.x, y: c.y });
+    }
   }
 
   // ===== Rank-up promotion sequence =====
