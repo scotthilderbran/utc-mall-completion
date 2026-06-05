@@ -664,9 +664,10 @@
       height: 90px;
       flex-shrink: 0;
     }
-    .ring-bg, .ring-fg { stroke-width: 14; }
-    .ring-label .pct { font-size: 22px; }
-    .ring-label .count { font-size: 10px; margin-top: 2px; }
+    .ring-bg, .ring-fg { stroke-width: 10; }
+    .ring-label .pct { font-size: 20px; }
+    .ring-label .count { font-size: 9px; margin-top: 2px; }
+    .ring-label .trophy { margin-top: 2px; width: 16px; height: 16px; }
 
     .controls { grid-template-columns: 1fr 1fr; }
     .controls .control:first-child { grid-column: 1 / -1; }
@@ -1412,38 +1413,28 @@
   //      progressed linearly with completion %. Drives badge + colors.
   //   2. Silly mall-rat flavor name — snaps at 5 fixed thresholds.
   const TIERS = [
-    { tier: 1,  name: "IRON"        },
-    { tier: 2,  name: "BRONZE"      },
-    { tier: 3,  name: "SILVER"      },
-    { tier: 4,  name: "GOLD"        },
-    { tier: 5,  name: "PLATINUM"    },
-    { tier: 6,  name: "EMERALD"     },
-    { tier: 7,  name: "DIAMOND"     },
-    { tier: 8,  name: "MASTER"      },
-    { tier: 9,  name: "GRANDMASTER" },
-    { tier: 10, name: "CHALLENGER"  },
+    { tier: 1,  name: "IRON",        silly: "Tourist"                   },
+    { tier: 2,  name: "BRONZE",      silly: "Civilian"                  },
+    { tier: 3,  name: "SILVER",      silly: "Window Shopper"            },
+    { tier: 4,  name: "GOLD",        silly: "Regular"                   },
+    { tier: 5,  name: "PLATINUM",    silly: "Local Legend"              },
+    { tier: 6,  name: "EMERALD",     silly: "Certified Mall Enthusiast" },
+    { tier: 7,  name: "DIAMOND",     silly: "Mallrat"                   },
+    { tier: 8,  name: "MASTER",      silly: "UTC Hall-of-Famer"         },
+    { tier: 9,  name: "GRANDMASTER", silly: "Friend of Chef Fei"        },
+    { tier: 10, name: "CHALLENGER",  silly: "Ascended Mall Deity"       },
   ];
   const DIVISIONS = ["IV", "III", "II", "I"];
-  const SILLY_NAMES = [
-    { min: 0,    name: "Mall Civilian"     },
-    { min: 0.1, name: "Certified Mall Enthusiast"  },
-    { min: 0.25, name: "Mallrat"    },
-    { min: 0.50, name: "Friend of Chef Fei"       },
-    { min: 0.75, name: "S+ Rank Mall God"           },
-  ];
   function getRank(pct) {
     const STEPS = TIERS.length * DIVISIONS.length;
     const step = Math.min(STEPS - 1, Math.floor(pct * STEPS));
     const tier = TIERS[Math.floor(step / DIVISIONS.length)];
     const div  = DIVISIONS[step % DIVISIONS.length];
 
-    let silly = SILLY_NAMES[0];
-    for (const s of SILLY_NAMES) if (pct >= s.min) silly = s;
-
     return {
       tier: tier.tier,
       league: `${tier.name} ${div}`,
-      name: silly.name,
+      name: tier.silly,
     };
   }
 
