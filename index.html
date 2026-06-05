@@ -266,6 +266,55 @@
     transform: scale(1);
     color: #0b1020;
   }
+
+  /* ===== Holographic foil on visited cards ===== */
+  .card.visited::before,
+  .card.visited::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    z-index: 3;
+  }
+  /* Rainbow iridescent layer */
+  .card.visited::before {
+    background: repeating-linear-gradient(
+      115deg,
+      rgba(255, 119, 115, 0.55) 0%,
+      rgba(255, 237, 95, 0.55) 8%,
+      rgba(168, 255, 95, 0.55) 16%,
+      rgba(131, 255, 247, 0.55) 24%,
+      rgba(120, 148, 255, 0.55) 32%,
+      rgba(216, 117, 255, 0.55) 40%,
+      rgba(255, 119, 115, 0.55) 48%
+    );
+    background-size: 200% 200%;
+    background-position: calc(var(--mx, 50) * 1%) calc(var(--my, 50) * 1%);
+    mix-blend-mode: color-dodge;
+    filter: brightness(0.9) contrast(1.3);
+  }
+  /* Cursor-tracking specular highlight */
+  .card.visited::after {
+    background: radial-gradient(
+      circle at calc(var(--mx, 50) * 1%) calc(var(--my, 50) * 1%),
+      rgba(255, 255, 255, 0.55),
+      rgba(255, 255, 255, 0.10) 25%,
+      transparent 50%
+    );
+    mix-blend-mode: overlay;
+  }
+  .card.visited:hover::before,
+  .card.visited:hover::after {
+    opacity: 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .card.visited::before,
+    .card.visited::after { display: none; }
+  }
+
   .card .badge {
     display: inline-block;
     margin-top: 10px;
@@ -381,74 +430,74 @@
   // ===== Data =====
   // status: 'open' | 'soon' | 'closed'
   const RESTAURANTS = [
-    { name: "85°C Bakery Café", category: "Bakery & Desserts" },
-    { name: "Batch & Box", category: "Bakery & Desserts" },
+    { name: "85°C Bakery Café", category: "Bakery & Sweets" },
+    { name: "Batch & Box", category: "Bakery & Sweets" },
     { name: "Bazille", category: "American" },
     { name: "BenGong's Tea", category: "Coffee & Tea" },
     { name: "Blue Bottle Coffee", category: "Coffee & Tea" },
-    { name: "Blue Ocean Sushi & Grill", category: "Japanese" },
+    { name: "Blue Ocean Sushi & Grill", category: "Asian" },
     { name: "Board & Brew Specialty Sandwiches", category: "Quick Bites" },
     { name: "Capital One Café", category: "Coffee & Tea" },
     { name: "CHAGEE Modern Teahouse", category: "Coffee & Tea", status: "soon" },
     { name: "Charleys", category: "Quick Bites" },
-    { name: "Corner Bakery", category: "Bakery & Desserts" },
-    { name: "Crepe Delicious", category: "Bakery & Desserts" },
-    { name: "Din Tai Fung", category: "Chinese" },
+    { name: "Corner Bakery", category: "Bakery & Sweets" },
+    { name: "Crepe Delicious", category: "Bakery & Sweets" },
+    { name: "Din Tai Fung", category: "Asian" },
     { name: "Eureka! Discover American Craft", category: "American" },
-    { name: "Gen Korean BBQ", category: "Korean" },
-    { name: "Hai Di Lao", category: "Chinese" },
+    { name: "Gen Korean BBQ", category: "Asian" },
+    { name: "Hai Di Lao", category: "Asian" },
     { name: "Hanna's Creamery & Cafe", category: "Ice Cream & Frozen" },
     { name: "Happy Lemon", category: "Coffee & Tea" },
     { name: "HeyTea", category: "Coffee & Tea" },
-    { name: "Javier's", category: "Latin" },
-    { name: "Joe & The Juice", category: "Healthy" },
+    { name: "Javier's", category: "Mexican & Latin" },
+    { name: "Joe & The Juice", category: "Healthy & Juice" },
     { name: "JOEY La Jolla", category: "American" },
-    { name: "Katsuya KO", category: "Japanese" },
+    { name: "Katsuya KO", category: "Asian" },
     { name: "La Colombe", category: "Coffee & Tea" },
-    { name: "Laderach", category: "Bakery & Desserts" },
-    { name: "Lady M Cake Boutique", category: "Bakery & Desserts" },
-    { name: "Le Macaron", category: "Bakery & Desserts" },
+    { name: "Laderach", category: "Bakery & Sweets" },
+    { name: "Lady M Cake Boutique", category: "Bakery & Sweets" },
+    { name: "Le Macaron", category: "Bakery & Sweets" },
     { name: "Lucrezia", category: "Italian" },
-    { name: "Marugame Udon", category: "Japanese" },
-    { name: "Melo Melo", category: "Coffee & Tea" },
-    { name: "Menya Ultra", category: "Japanese" },
+    { name: "Marugame Udon", category: "Asian" },
+    { name: "Melo Melo", category: "Bakery & Sweets" },
+    { name: "Menya Ultra", category: "Asian" },
     { name: "Nespresso", category: "Coffee & Tea", status: "closed" },
     { name: "Nespresso Pop-Up", category: "Coffee & Tea" },
     { name: "Nice Rice", category: "Asian" },
     { name: "Nordstrom E-Bar", category: "Coffee & Tea" },
-    { name: "Onigilly Japanese Kitchen", category: "Japanese", status: "soon" },
+    { name: "Onigilly Japanese Kitchen", category: "Asian", status: "soon" },
     { name: "Pacific Catch", category: "American" },
-    { name: "Panda Express", category: "Chinese" },
+    { name: "Panda Express", category: "Asian" },
     { name: "Panini Kabob Grill", category: "Mediterranean" },
-    { name: "Parana Empanadas", category: "Latin" },
-    { name: "Parfait Paris", category: "Bakery & Desserts" },
+    { name: "Parana Empanadas", category: "Mexican & Latin" },
+    { name: "Parfait Paris", category: "Bakery & Sweets" },
     { name: "Pazza Market and Cucina", category: "Italian" },
     { name: "Pinkberry", category: "Ice Cream & Frozen" },
-    { name: "Qin West Noodle", category: "Chinese" },
+    { name: "Qin West Noodle", category: "Asian" },
     { name: "Queenstown Bistro", category: "American" },
-    { name: "Raised by Wolves", category: "Bar" },
-    { name: "Ramen Nagi", category: "Japanese" },
-    { name: "Rising Sun Sushi", category: "Japanese" },
-    { name: "Royal India", category: "Indian" },
+    { name: "Raised by Wolves", category: "American" },
+    { name: "Ramen Nagi", category: "Asian" },
+    { name: "Rising Sun Sushi", category: "Asian" },
+    { name: "Royal India", category: "Asian" },
     { name: "Salt & Straw", category: "Ice Cream & Frozen" },
     { name: "Sbarro", category: "Italian" },
     { name: "Seasons 52", category: "American" },
-    { name: "See's Candies", category: "Bakery & Desserts" },
-    { name: "Shake Shack", category: "Burgers" },
-    { name: "Silverlake Ramen", category: "Japanese" },
-    { name: "Sip Fresh", category: "Healthy" },
+    { name: "See's Candies", category: "Bakery & Sweets" },
+    { name: "Shake Shack", category: "American" },
+    { name: "Silverlake Ramen", category: "Asian" },
+    { name: "Sip Fresh", category: "Healthy & Juice" },
     { name: "Slurp", category: "Asian" },
-    { name: "Smashburger", category: "Burgers" },
+    { name: "Smashburger", category: "American" },
     { name: "SomiSomi", category: "Ice Cream & Frozen" },
     { name: "Starbucks", category: "Coffee & Tea", status: "closed" },
-    { name: "Suki Hana", category: "Japanese" },
-    { name: "Superberry Açaí", category: "Healthy" },
-    { name: "Swagyu Burger", category: "Burgers" },
-    { name: "Sweetgreen", category: "Healthy" },
+    { name: "Suki Hana", category: "Asian" },
+    { name: "Superberry Açaí", category: "Healthy & Juice" },
+    { name: "Swagyu Burger", category: "American" },
+    { name: "Sweetgreen", category: "Healthy & Juice" },
     { name: "Teleferic Barcelona", category: "Mediterranean", status: "soon" },
-    { name: "Tender Greens", category: "Healthy" },
+    { name: "Tender Greens", category: "Healthy & Juice" },
     { name: "The Amalfi Llama", category: "Italian" },
-    { name: "True Food Kitchen", category: "Healthy" },
+    { name: "True Food Kitchen", category: "Healthy & Juice" },
     { name: "Van Leeuwen Ice Cream", category: "Ice Cream & Frozen" },
     { name: "Venchi", category: "Ice Cream & Frozen" },
     { name: "Wetzel's Pretzels", category: "Quick Bites" },
@@ -608,6 +657,8 @@
     ringLabel.classList.toggle("complete", complete);
     ring.classList.toggle("complete", complete);
     ring.style.stroke = complete ? "url(#ringGoldGradient)" : "url(#ringGradient)";
+
+    maybeFireMilestone(done, total);
   }
 
   function escapeHtml(s) {
@@ -629,6 +680,159 @@
       renderGrid();
     }
   });
+
+  // ===== Confetti milestone bursts =====
+  const MILESTONES = [25, 50, 75, 100];
+  const CONFETTI_COLORS = ["#5eead4", "#818cf8", "#a5b4fc", "#34d399", "#f472b6", "#fb7185", "#fbbf24"];
+  const GOLD_COLORS = ["#fbbf24", "#f59e0b", "#fde047", "#facc15", "#fcd34d", "#ffffff"];
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const confettiCanvas = document.createElement("canvas");
+  confettiCanvas.style.cssText =
+    "position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:9999;";
+  document.body.appendChild(confettiCanvas);
+  const cctx = confettiCanvas.getContext("2d");
+  let DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+  function resizeConfetti() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    confettiCanvas.width = innerWidth * DPR;
+    confettiCanvas.height = innerHeight * DPR;
+    cctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  resizeConfetti();
+  window.addEventListener("resize", resizeConfetti);
+
+  let particles = [];
+  let confettiRAF = null;
+
+  function spawnConfetti({ count, x, y, gold = false, angle = null, spread = Math.PI * 2, power = 1 }) {
+    const palette = gold ? GOLD_COLORS : CONFETTI_COLORS;
+    for (let i = 0; i < count; i++) {
+      const a = angle === null
+        ? Math.random() * Math.PI * 2
+        : angle + (Math.random() - 0.5) * spread;
+      const speed = (4 + Math.random() * 7) * power;
+      particles.push({
+        x, y,
+        vx: Math.cos(a) * speed,
+        vy: Math.sin(a) * speed + (angle === null ? -3 : 0),
+        rot: Math.random() * Math.PI * 2,
+        vrot: (Math.random() - 0.5) * 0.35,
+        size: 6 + Math.random() * 7,
+        color: palette[(Math.random() * palette.length) | 0],
+        shape: Math.random() < 0.55 ? "rect" : "circle",
+        life: 1,
+        decay: 0.006 + Math.random() * 0.006,
+      });
+    }
+    if (!confettiRAF) confettiRAF = requestAnimationFrame(tickConfetti);
+  }
+
+  function tickConfetti() {
+    cctx.clearRect(0, 0, innerWidth, innerHeight);
+    const G = 0.18;
+    const DRAG = 0.992;
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.vy += G;
+      p.vx *= DRAG;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vrot;
+      p.life -= p.decay;
+      if (p.life <= 0 || p.y > innerHeight + 60) {
+        particles.splice(i, 1);
+        continue;
+      }
+      cctx.save();
+      cctx.globalAlpha = Math.max(0, p.life);
+      cctx.translate(p.x, p.y);
+      cctx.rotate(p.rot);
+      cctx.fillStyle = p.color;
+      if (p.shape === "rect") {
+        cctx.fillRect(-p.size / 2, -p.size / 3, p.size, p.size * 0.55);
+      } else {
+        cctx.beginPath();
+        cctx.arc(0, 0, p.size / 2.4, 0, Math.PI * 2);
+        cctx.fill();
+      }
+      cctx.restore();
+    }
+    if (particles.length > 0) {
+      confettiRAF = requestAnimationFrame(tickConfetti);
+    } else {
+      cctx.clearRect(0, 0, innerWidth, innerHeight);
+      confettiRAF = null;
+    }
+  }
+
+  function ringCenter() {
+    const rect = document.querySelector(".ring-wrap").getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  }
+
+  function fireMilestone(milestone) {
+    if (reducedMotion) return;
+    const c = ringCenter();
+    const gold = milestone === 100;
+    spawnConfetti({
+      count: milestone === 100 ? 140 : 75,
+      x: c.x,
+      y: c.y,
+      gold,
+      power: milestone === 100 ? 1.2 : 1,
+    });
+    if (milestone === 100) {
+      setTimeout(() => spawnConfetti({
+        count: 90, x: 0, y: innerHeight,
+        gold: true, angle: -Math.PI / 4, spread: Math.PI / 3, power: 1.4,
+      }), 220);
+      setTimeout(() => spawnConfetti({
+        count: 90, x: innerWidth, y: innerHeight,
+        gold: true, angle: -3 * Math.PI / 4, spread: Math.PI / 3, power: 1.4,
+      }), 420);
+    }
+  }
+
+  let lastMilestone = 0;
+  let milestoneInit = false;
+  function maybeFireMilestone(done, total) {
+    const pctInt = total === 0 ? 0 : Math.round((done / total) * 100);
+    const reached = MILESTONES.reduce((m, x) => (pctInt >= x ? x : m), 0);
+    if (!milestoneInit) {
+      lastMilestone = reached;
+      milestoneInit = true;
+      return;
+    }
+    if (reached > lastMilestone) fireMilestone(reached);
+    lastMilestone = reached;
+  }
+
+  // ===== Holographic foil pointer tracking =====
+  (function setupHolo() {
+    let activeCard = null;
+    let pendingX = 50, pendingY = 50;
+    let rafQueued = false;
+    grid.addEventListener("pointermove", (e) => {
+      const card = e.target.closest(".card.visited");
+      if (!card) return;
+      activeCard = card;
+      const rect = card.getBoundingClientRect();
+      pendingX = ((e.clientX - rect.left) / rect.width) * 100;
+      pendingY = ((e.clientY - rect.top) / rect.height) * 100;
+      if (!rafQueued) {
+        rafQueued = true;
+        requestAnimationFrame(() => {
+          if (activeCard) {
+            activeCard.style.setProperty("--mx", pendingX.toFixed(2));
+            activeCard.style.setProperty("--my", pendingY.toFixed(2));
+          }
+          rafQueued = false;
+        });
+      }
+    });
+  })();
 
   // ===== Init =====
   renderChips();
