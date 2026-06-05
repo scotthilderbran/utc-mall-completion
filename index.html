@@ -40,13 +40,34 @@
     padding: 32px 24px 80px;
   }
 
-  /* ===== Header ===== */
+  /* ===== Header — unified card wrapping rank badge + progress ring ===== */
   header {
+    /* Default palette vars — overridden per [data-tier] (same rules as
+       .rank-hero/.sticky-bar below). Having them here means the ring SVG
+       gradient and glow inherit the right tier color without extra JS. */
+    --c1: #f1f5f9;
+    --c2: #94a3b8;
+    --c3: #475569;
+    --glow: rgba(148, 163, 184, 0.15);
+
     display: grid;
     grid-template-columns: 1fr auto;
-    gap: 32px;
+    gap: 24px;
     align-items: center;
     margin-bottom: 32px;
+    padding: 22px 28px;
+    border-radius: 22px;
+    border: 1px solid color-mix(in srgb, var(--c2) 45%, transparent);
+    background: linear-gradient(135deg,
+      color-mix(in srgb, var(--c2) 10%, transparent),
+      color-mix(in srgb, var(--c3) 6%, transparent));
+    box-shadow: 0 0 32px var(--glow);
+    transition: border-color 0.6s ease, box-shadow 0.6s ease,
+                background 0.6s ease;
+  }
+  /* Challenger tier pulse on the card itself */
+  header[data-tier="10"] {
+    animation: rankPulse 2.6s ease-in-out infinite;
   }
   .title-block {
     max-width: 760px;
@@ -86,29 +107,14 @@
     color: var(--text);
   }
 
-  /* ===== Rank hero card ===== */
+  /* ===== Rank hero — plain flex container, card chrome lives on header ===== */
   .rank-hero {
-    /* Per-tier palette — overridden per [data-tier] below.
-       --c1: highlight, --c2: midtone, --c3: shadow, --glow: ambient. */
-    --c1: #f1f5f9;
-    --c2: #94a3b8;
-    --c3: #475569;
-    --glow: rgba(148, 163, 184, 0.15);
-
     margin: 0;
-    padding: 22px 28px;
     display: flex;
     align-items: center;
     justify-content: flex-start;
     gap: 24px;
-    border-radius: 22px;
-    border: 1px solid color-mix(in srgb, var(--c2) 45%, transparent);
-    background: linear-gradient(135deg,
-      color-mix(in srgb, var(--c2) 10%, transparent),
-      color-mix(in srgb, var(--c3) 6%, transparent));
-    box-shadow: 0 0 32px var(--glow);
-    transition: border-color 0.6s ease, box-shadow 0.6s ease,
-                background 0.6s ease;
+    min-width: 0;
   }
   .rank-icon {
     width: 110px;
@@ -166,21 +172,21 @@
   .rank-hero[data-tier="9"]  .rank-icon svg.tier-grandmaster { display: block; }
   .rank-hero[data-tier="10"] .rank-icon svg.tier-challenger  { display: block; }
 
-  /* Per-tier palettes */
-  .rank-hero[data-tier="1"]  { --c1: #d6d3d1; --c2: #a8a29e; --c3: #57534e; --glow: rgba(168, 162, 158, 0.10); }
-  .rank-hero[data-tier="2"]  { --c1: #fde2c0; --c2: #d4a574; --c3: #6b4423; --glow: rgba(212, 165, 116, 0.18); }
-  .rank-hero[data-tier="3"]  { --c1: #f1f5f9; --c2: #cbd5e1; --c3: #475569; --glow: rgba(203, 213, 225, 0.18); }
-  .rank-hero[data-tier="4"]  { --c1: #fde68a; --c2: #fbbf24; --c3: #92400e; --glow: rgba(251, 191, 36, 0.22); }
-  .rank-hero[data-tier="5"]  { --c1: #ccfbf1; --c2: #5eead4; --c3: #115e59; --glow: rgba(94, 234, 212, 0.25); }
-  .rank-hero[data-tier="6"]  { --c1: #bbf7d0; --c2: #4ade80; --c3: #166534; --glow: rgba(34, 197, 94, 0.28); }
-  .rank-hero[data-tier="7"]  { --c1: #a5f3fc; --c2: #22d3ee; --c3: #0e7490; --glow: rgba(34, 211, 238, 0.30); }
-  .rank-hero[data-tier="8"]  { --c1: #e9d5ff; --c2: #c084fc; --c3: #6b21a8; --glow: rgba(168, 85, 247, 0.32); }
-  .rank-hero[data-tier="9"]  { --c1: #fecaca; --c2: #ef4444; --c3: #7f1d1d; --glow: rgba(239, 68, 68, 0.35); }
-  .rank-hero[data-tier="10"] {
-    --c1: #fef3c7; --c2: #fbbf24; --c3: #b91c1c; --glow: rgba(251, 191, 36, 0.40);
-    animation: rankPulse 2.6s ease-in-out infinite;
-  }
-  .rank-hero[data-tier="10"] .rank-name {
+  /* Per-tier palettes — shared by the hero card, the sticky bar, and
+     (on mobile) the unified header card. Each rule sets four CSS vars:
+       --c1: highlight, --c2: midtone, --c3: shadow, --glow: ambient. */
+  .rank-hero[data-tier="1"],  .sticky-bar[data-tier="1"],  header[data-tier="1"]  { --c1: #d6d3d1; --c2: #a8a29e; --c3: #57534e; --glow: rgba(168, 162, 158, 0.10); }
+  .rank-hero[data-tier="2"],  .sticky-bar[data-tier="2"],  header[data-tier="2"]  { --c1: #fde2c0; --c2: #d4a574; --c3: #6b4423; --glow: rgba(212, 165, 116, 0.18); }
+  .rank-hero[data-tier="3"],  .sticky-bar[data-tier="3"],  header[data-tier="3"]  { --c1: #f1f5f9; --c2: #cbd5e1; --c3: #475569; --glow: rgba(203, 213, 225, 0.18); }
+  .rank-hero[data-tier="4"],  .sticky-bar[data-tier="4"],  header[data-tier="4"]  { --c1: #fde68a; --c2: #fbbf24; --c3: #92400e; --glow: rgba(251, 191, 36, 0.22); }
+  .rank-hero[data-tier="5"],  .sticky-bar[data-tier="5"],  header[data-tier="5"]  { --c1: #ccfbf1; --c2: #5eead4; --c3: #115e59; --glow: rgba(94, 234, 212, 0.25); }
+  .rank-hero[data-tier="6"],  .sticky-bar[data-tier="6"],  header[data-tier="6"]  { --c1: #bbf7d0; --c2: #4ade80; --c3: #166534; --glow: rgba(34, 197, 94, 0.28); }
+  .rank-hero[data-tier="7"],  .sticky-bar[data-tier="7"],  header[data-tier="7"]  { --c1: #a5f3fc; --c2: #22d3ee; --c3: #0e7490; --glow: rgba(34, 211, 238, 0.30); }
+  .rank-hero[data-tier="8"],  .sticky-bar[data-tier="8"],  header[data-tier="8"]  { --c1: #e9d5ff; --c2: #c084fc; --c3: #6b21a8; --glow: rgba(168, 85, 247, 0.32); }
+  .rank-hero[data-tier="9"],  .sticky-bar[data-tier="9"],  header[data-tier="9"]  { --c1: #fecaca; --c2: #ef4444; --c3: #7f1d1d; --glow: rgba(239, 68, 68, 0.35); }
+  .rank-hero[data-tier="10"], .sticky-bar[data-tier="10"], header[data-tier="10"] { --c1: #fef3c7; --c2: #fbbf24; --c3: #b91c1c; --glow: rgba(251, 191, 36, 0.40); }
+  .rank-hero[data-tier="10"] .rank-name,
+  .sticky-bar[data-tier="10"] .sticky-rank-name {
     background: linear-gradient(90deg, #fef3c7, #fbbf24 45%, #dc2626);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -216,7 +222,7 @@
     stroke-linecap: round;
     transition: stroke-dashoffset 0.9s cubic-bezier(0.22, 1, 0.36, 1),
                 stroke 0.6s ease;
-    filter: drop-shadow(0 0 10px rgba(94,234,212,0.45));
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--c2) 60%, transparent));
   }
   .ring-fg.complete {
     filter: drop-shadow(0 0 16px rgba(251,191,36,0.65));
@@ -479,30 +485,205 @@
     font-size: 12px;
   }
 
+  /* ===== Sticky bar =====
+     Slides in from the top once the user has scrolled past the rank
+     hero + completion ring. Mirrors the active tier palette so its
+     colors evolve with the user's rank. */
+  .sticky-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    --c1: #f1f5f9;
+    --c2: #94a3b8;
+    --c3: #475569;
+    --glow: rgba(148, 163, 184, 0.15);
+    transform: translateY(-110%);
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+    will-change: transform;
+  }
+  .sticky-bar.visible {
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  .sticky-bar-inner {
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 11px 24px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    align-items: center;
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--bg) 88%, transparent),
+      color-mix(in srgb, var(--bg) 82%, transparent));
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    backdrop-filter: blur(14px) saturate(1.4);
+    border-bottom: 1px solid color-mix(in srgb, var(--c2) 35%, var(--border));
+    box-shadow:
+      0 5px 20px rgba(0, 0, 0, 0.30),
+      0 0 22px var(--glow);
+    transition: border-color 0.6s ease, box-shadow 0.6s ease;
+  }
+  /* On viewports wider than the max-width, the inner card floats with
+     rounded bottom corners and side borders instead of abruptly stopping. */
+  @media (min-width: 1248px) {
+    .sticky-bar-inner {
+      border: 1px solid color-mix(in srgb, var(--c2) 35%, var(--border));
+      border-top: none;
+      border-radius: 0 0 14px 14px;
+    }
+  }
+  .sticky-rank-mini {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+  }
+  .sticky-rank-icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+  }
+  .sticky-rank-icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .sticky-rank-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .sticky-rank-tier {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--c2);
+    line-height: 1.2;
+    transition: color 0.6s ease;
+  }
+  .sticky-rank-name {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.005em;
+    background: linear-gradient(90deg, var(--c1), var(--c2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sticky-progress-mini {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    min-width: 180px;
+  }
+  .sticky-progress-text {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .sticky-progress-text .sticky-pct {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .sticky-progress-text .sticky-count {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .sticky-progress-bar {
+    width: 200px;
+    height: 6px;
+    background: var(--panel-2);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+  }
+  .sticky-progress-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    height: 100%;
+    width: 0%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--c2), var(--c1));
+    box-shadow: 0 0 10px var(--glow);
+    transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+                background 0.6s ease,
+                box-shadow 0.6s ease;
+  }
+  .sticky-bar[data-tier="10"] .sticky-progress-fill {
+    background: linear-gradient(90deg, #fbbf24, #fef3c7, #dc2626);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sticky-bar { transition: none; }
+    .sticky-progress-fill { transition: background 0.6s ease; }
+  }
+
   /* ===== Responsive ===== */
   @media (max-width: 720px) {
+    /* Compact layout overrides for the unified header card on mobile */
     header {
-      grid-template-columns: 1fr;
       gap: 14px;
-      text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 22px;
+      padding: 16px 18px;
+      /* Slightly denser tint + softer shadow on smaller screens */
+      background: linear-gradient(135deg,
+        color-mix(in srgb, var(--c2) 12%, transparent),
+        color-mix(in srgb, var(--c3) 6%, transparent));
+      box-shadow: 0 0 28px var(--glow);
     }
-    .ring-wrap { margin: 0 auto; width: 150px; height: 150px; }
-    .ring-label .pct { font-size: 32px; }
+    .rank-hero {
+      flex-direction: row;
+      gap: 12px;
+      min-width: 0;
+    }
+    .rank-icon { width: 60px; height: 60px; }
+    .rank-name { font-size: 18px; }
+    .rank-tier { font-size: 11px; letter-spacing: 0.18em; }
+    .ring-wrap {
+      margin: 0;
+      width: 90px;
+      height: 90px;
+      flex-shrink: 0;
+    }
+    .ring-bg, .ring-fg { stroke-width: 14; }
+    .ring-label .pct { font-size: 22px; }
+    .ring-label .count { font-size: 10px; margin-top: 2px; }
+
     .controls { grid-template-columns: 1fr 1fr; }
     .controls .control:first-child { grid-column: 1 / -1; }
     .title-block { margin-bottom: 18px; }
     .title-block h1 { font-size: 28px; }
-    .rank-hero {
-      flex-direction: column;
+
+    /* Tighter sticky bar on mobile */
+    .sticky-bar-inner {
+      padding: 9px 16px;
       gap: 14px;
-      padding: 20px 18px;
-      text-align: center;
-      justify-content: center;
     }
-    .rank-icon { width: 88px; height: 88px; }
-    .rank-name { font-size: 24px; }
-    .rank-tier { font-size: 12px; letter-spacing: 0.18em; }
+    .sticky-rank-icon { width: 34px; height: 34px; }
+    .sticky-rank-name { font-size: 14px; }
+    .sticky-rank-tier { font-size: 9px; letter-spacing: 0.18em; }
+    .sticky-progress-mini { min-width: 0; gap: 5px; }
+    .sticky-progress-bar { width: 110px; height: 5px; }
+    .sticky-progress-text .sticky-pct { font-size: 14px; }
+    .sticky-progress-text .sticky-count { display: none; }
   }
 
   /* ===== Debug panel (?debug) ===== */
@@ -822,7 +1003,7 @@
     <a class="nav-link" href="tierlist.html">Rank them S → F →</a>
   </div>
 
-  <header>
+  <header data-tier="1">
   <div class="rank-hero" id="rankBadge" data-tier="1">
     <div class="rank-icon">
       <!-- Iron -->
@@ -1077,8 +1258,8 @@
       <svg viewBox="0 0 200 200" aria-hidden="true">
         <defs>
           <linearGradient id="ringGradient" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#5eead4"/>
-            <stop offset="100%" stop-color="#818cf8"/>
+            <stop offset="0%" style="stop-color: var(--c2)"/>
+            <stop offset="100%" style="stop-color: var(--c1)"/>
           </linearGradient>
           <linearGradient id="ringGoldGradient" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stop-color="#fbbf24"/>
@@ -1098,6 +1279,29 @@
       </div>
     </div>
   </header>
+
+  <!-- Anchored summary bar — fixed to the top, slides in once the user
+       has scrolled past the rank hero + completion ring. -->
+  <div class="sticky-bar" id="stickyBar" data-tier="1" aria-hidden="true">
+    <div class="sticky-bar-inner">
+      <div class="sticky-rank-mini">
+        <div class="sticky-rank-icon" id="stickyRankIcon"></div>
+        <div class="sticky-rank-text">
+          <div class="sticky-rank-tier" id="stickyTier">IRON IV</div>
+          <div class="sticky-rank-name" id="stickyName">Mall Civilian</div>
+        </div>
+      </div>
+      <div class="sticky-progress-mini">
+        <div class="sticky-progress-text">
+          <span class="sticky-pct" id="stickyPct">0%</span>
+          <span class="sticky-count" id="stickyCount">0 / 0</span>
+        </div>
+        <div class="sticky-progress-bar">
+          <div class="sticky-progress-fill" id="stickyFill"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="controls">
     <input id="search" class="control" type="search" placeholder="Search by name…" autocomplete="off" />
@@ -1178,6 +1382,26 @@
   const rankBadge = document.getElementById("rankBadge");
   const rankLabelEl = document.getElementById("rankLabel");
   const rankTierEl = document.getElementById("rankTier");
+  const headerEl = document.querySelector("header");
+
+  // Sticky-bar refs — mirror the rank hero + ring as a compact anchored
+  // summary that slides in once the user scrolls past them.
+  const stickyBar = document.getElementById("stickyBar");
+  const stickyRankIcon = document.getElementById("stickyRankIcon");
+  const stickyTierEl = document.getElementById("stickyTier");
+  const stickyNameEl = document.getElementById("stickyName");
+  const stickyPctEl = document.getElementById("stickyPct");
+  const stickyCountEl = document.getElementById("stickyCount");
+  const stickyFillEl = document.getElementById("stickyFill");
+
+  // Map tier number → the SVG class used inside .rank-icon so we can
+  // clone the right badge into the sticky bar on tier changes. Also
+  // used by the promotion overlay below.
+  const TIER_SVG_CLASS = {
+    1: "tier-iron", 2: "tier-bronze", 3: "tier-silver", 4: "tier-gold",
+    5: "tier-platinum", 6: "tier-emerald", 7: "tier-diamond",
+    8: "tier-master", 9: "tier-grandmaster", 10: "tier-challenger",
+  };
 
   const CIRC = 2 * Math.PI * 86; // ring circumference
 
@@ -1329,17 +1553,21 @@
     const total = active.length;
     const done = active.filter(r => visited.has(r.name)).length;
     const pct = total === 0 ? 0 : done / total;
+    const pctInt = Math.round(pct * 100);
 
     ring.style.strokeDasharray = CIRC;
     ring.style.strokeDashoffset = CIRC * (1 - pct);
 
-    pctLabel.textContent = Math.round(pct * 100) + "%";
+    pctLabel.textContent = pctInt + "%";
     countLabel.textContent = `${done} / ${total}`;
 
     const rank = getRank(pct);
     rankBadge.dataset.tier = rank.tier;
+    if (headerEl) headerEl.dataset.tier = rank.tier;
     rankTierEl.textContent = rank.league;
     rankLabelEl.textContent = rank.name;
+
+    syncStickyBar(rank, pctInt, done, total);
 
     const complete = done === total && total > 0;
     ringLabel.classList.toggle("complete", complete);
@@ -1348,6 +1576,59 @@
 
     maybeFireMilestone(done, total);
     maybeFirePromotion(rank);
+  }
+
+  // Keeps the anchored summary bar in sync with the rank hero + ring.
+  // The mini icon is cloned from the active rank-hero SVG so we don't
+  // duplicate the ten tier badges in the DOM — the cloned SVG resolves
+  // its gradient `url(#...)` refs against the originals already in
+  // the document.
+  function syncStickyBar(rank, pctInt, done, total) {
+    if (!stickyBar) return;
+    stickyBar.dataset.tier = rank.tier;
+    stickyTierEl.textContent = rank.league;
+    stickyNameEl.textContent = rank.name;
+    stickyPctEl.textContent = pctInt + "%";
+    stickyCountEl.textContent = `${done} / ${total}`;
+    stickyFillEl.style.width = pctInt + "%";
+
+    if (stickyRankIcon.dataset.tier !== String(rank.tier)) {
+      stickyRankIcon.dataset.tier = String(rank.tier);
+      const src = rankBadge.querySelector(
+        ".rank-icon svg." + TIER_SVG_CLASS[rank.tier]
+      );
+      if (src) {
+        stickyRankIcon.innerHTML = "";
+        stickyRankIcon.appendChild(src.cloneNode(true));
+      }
+    }
+  }
+
+  // Reveal the sticky bar once the rank-hero + ring header has fully
+  // scrolled past the top of the viewport. rAF-throttled scroll listener
+  // keeps it cheap (one getBoundingClientRect read per frame, only when
+  // scroll has moved).
+  if (headerEl && stickyBar) {
+    let stickyVisible = false;
+    let pending = false;
+    const evalSticky = () => {
+      pending = false;
+      const shouldShow = headerEl.getBoundingClientRect().bottom <= 0;
+      if (shouldShow !== stickyVisible) {
+        stickyVisible = shouldShow;
+        stickyBar.classList.toggle("visible", shouldShow);
+        stickyBar.setAttribute("aria-hidden", shouldShow ? "false" : "true");
+      }
+    };
+    const onScroll = () => {
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(evalSticky);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    // Initial check (in case the page loads already scrolled)
+    evalSticky();
   }
 
   function escapeHtml(s) {
@@ -1506,12 +1787,8 @@
   // Fires once per tier ever crossed (persisted in localStorage). The
   // animation is pure CSS keyframes triggered by toggling a class on a
   // dynamically-inserted overlay, so it works in Chrome, Safari, Firefox,
-  // and Edge without any modern-only APIs.
-  const TIER_SVG_CLASS = {
-    1: "tier-iron", 2: "tier-bronze", 3: "tier-silver", 4: "tier-gold",
-    5: "tier-platinum", 6: "tier-emerald", 7: "tier-diamond",
-    8: "tier-master", 9: "tier-grandmaster", 10: "tier-challenger",
-  };
+  // and Edge without any modern-only APIs. TIER_SVG_CLASS is defined
+  // above (shared with the sticky bar).
   let promoActive = false;
   let promoInit = false;
 
@@ -1776,16 +2053,43 @@
       const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
       camera.position.set(0, 0, 4.4);
 
-      // Tier-tinted rim light gives top tiers their signature glow
-      const rim = new THREE.PointLight(0xffffff, 1.2, 20);
-      rim.position.set(-2.5, 1, 2);
+      // Three-point lighting tuned so adjacent facets get distinctly
+      // shaded sides — RoomEnvironment alone is too uniform for that.
+      //   key  → strong warm directional, casts the bright facet highlights
+      //   fill → cool counter-light so the dark side isn't pitch black
+      //   rim  → tier-tinted back light that picks out silhouette edges
+      const keyLight = new THREE.DirectionalLight(0xfff2dd, 2.0);
+      keyLight.position.set(3, 4, 3);
+      scene.add(keyLight);
+      const fillLight = new THREE.DirectionalLight(0x6688cc, 0.75);
+      fillLight.position.set(-3, -1, 2);
+      scene.add(fillLight);
+      const rim = new THREE.PointLight(0xffffff, 2.0, 12);
+      rim.position.set(-1.5, 0.5, -2.5);
       scene.add(rim);
-      const fill = new THREE.DirectionalLight(0xffffff, 0.35);
-      fill.position.set(2, 2, 3);
-      scene.add(fill);
+
+      // Sprite-based bloom glow used by halo'd tiers. Generated once per
+      // mount, swapped color per build(). Lives inside the camera frustum
+      // so it can't clip against the rank-icon bounds.
+      const makeGlowTexture = () => {
+        const c = document.createElement("canvas");
+        c.width = c.height = 256;
+        const cx = c.getContext("2d");
+        const grd = cx.createRadialGradient(128, 128, 0, 128, 128, 128);
+        grd.addColorStop(0.0, "rgba(255,255,255,1)");
+        grd.addColorStop(0.18, "rgba(255,255,255,0.85)");
+        grd.addColorStop(0.45, "rgba(255,255,255,0.30)");
+        grd.addColorStop(1.0, "rgba(255,255,255,0)");
+        cx.fillStyle = grd;
+        cx.fillRect(0, 0, 256, 256);
+        const tex = new THREE.CanvasTexture(c);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        return tex;
+      };
 
       let mesh = null;
-      let halo = null;
+      let edges = null;
+      let glow = null;
       let cfgCurrent = null;
 
       function build(tier) {
@@ -1796,30 +2100,53 @@
           mesh.geometry.dispose();
           mesh.material.dispose();
         }
-        if (halo) {
-          scene.remove(halo);
-          halo.geometry.dispose();
-          halo.material.dispose();
-          halo = null;
+        if (edges) {
+          mesh?.remove?.(edges);
+          edges.geometry.dispose();
+          edges.material.dispose();
+          edges = null;
         }
-        mesh = new THREE.Mesh(makeGeometry(cfg), makeMaterial(cfg));
+        if (glow) {
+          scene.remove(glow);
+          glow.material.map?.dispose();
+          glow.material.dispose();
+          glow = null;
+        }
+        const geo = makeGeometry(cfg);
+        mesh = new THREE.Mesh(geo, makeMaterial(cfg));
         scene.add(mesh);
+
+        // Wireframe edge overlay — cheap way to keep facet borders crisp
+        // even on translucent gems where transmission washes out shading.
+        const edgeColor = new THREE.Color(cfg.c1).lerp(new THREE.Color(0xffffff), 0.5);
+        const edgeGeo = new THREE.EdgesGeometry(geo, 1);
+        const edgeMat = new THREE.LineBasicMaterial({
+          color: edgeColor,
+          transparent: true,
+          opacity: cfg.kind === "gem" ? 0.55 : 0.30,
+          depthWrite: false,
+        });
+        edges = new THREE.LineSegments(edgeGeo, edgeMat);
+        edges.scale.setScalar(1.002); // sit just outside the surface
+        mesh.add(edges);
+
+        // Tier-tinted rim picks out the silhouette — gems get a brighter
+        // wash so the glass picks up colored edges.
         rim.color.set(cfg.c1);
-        rim.intensity = cfg.kind === "gem" ? 1.5 : 1.0;
+        rim.intensity = cfg.kind === "gem" ? 2.4 : 1.6;
 
         if (cfg.halo) {
-          const haloGeo = new THREE.RingGeometry(1.45, 1.95, 128);
-          const haloMat = new THREE.MeshBasicMaterial({
+          const glowMat = new THREE.SpriteMaterial({
+            map: makeGlowTexture(),
             color: new THREE.Color(cfg.c1),
             transparent: true,
-            opacity: 0.85,
-            side: THREE.DoubleSide,
             depthWrite: false,
             blending: THREE.AdditiveBlending,
           });
-          halo = new THREE.Mesh(haloGeo, haloMat);
-          halo.position.z = -0.4; // sit behind the gem
-          scene.add(halo);
+          glow = new THREE.Sprite(glowMat);
+          glow.scale.set(2.8, 2.8, 1);
+          glow.position.z = -0.6; // sit behind the gem
+          scene.add(glow);
         }
       }
 
@@ -1874,9 +2201,10 @@
           mesh.rotation.x = curRX + Math.sin(t * 0.35) * 0.06;
           mesh.rotation.y = curRY + t * spin;
         }
-        if (halo) {
-          halo.rotation.z = t * 0.4;
-          halo.material.opacity = 0.7 + Math.sin(t * 2.2) * 0.2;
+        if (glow) {
+          const pulse = 0.85 + Math.sin(t * 2.4) * 0.18;
+          glow.scale.set(2.8 * pulse, 2.8 * pulse, 1);
+          glow.material.opacity = 0.75 + Math.sin(t * 3.1) * 0.15;
         }
 
         renderer.render(scene, camera);
@@ -1898,7 +2226,8 @@
           container.removeEventListener("pointermove", handlePointer);
           container.removeEventListener("pointerleave", handleLeave);
           if (mesh) { mesh.geometry.dispose(); mesh.material.dispose(); }
-          if (halo) { halo.geometry.dispose(); halo.material.dispose(); }
+          if (edges) { edges.geometry.dispose(); edges.material.dispose(); }
+          if (glow) { glow.material.map?.dispose(); glow.material.dispose(); }
           pmrem.dispose();
           renderer.dispose();
           canvas.remove();
