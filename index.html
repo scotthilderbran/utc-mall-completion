@@ -1967,16 +1967,20 @@
       // Note: detail=0 keeps the shape as a true platonic solid (8/12/20
       // big crisp facets). Higher detail subdivides toward a sphere and
       // kills the gem feel, so we stay at 0–1 throughout.
+      // Gems: emissive uses the DARK c2 (not bright c1) so the inner glow
+      // deepens the body color instead of washing it pale. attenuation is
+      // tight (~0.55) so light traveling through picks up rich saturation
+      // — long attenuation reads as milky/colorless.
       1:  { shape:"octa",   detail:0, kind:"metal", c1:"#cfc8c0", c2:"#3b322a", metalness:0.85, roughness:0.55, env:0.9,  spin:0.25 },
       2:  { shape:"octa",   detail:0, kind:"metal", c1:"#e6b585", c2:"#5c3617", metalness:0.95, roughness:0.30, env:1.2,  spin:0.35 },
       3:  { shape:"icosa",  detail:0, kind:"metal", c1:"#e7edf3", c2:"#475569", metalness:1.0,  roughness:0.18, env:1.4,  spin:0.40 },
       4:  { shape:"dodeca", detail:0, kind:"metal", c1:"#fcd34d", c2:"#92400e", metalness:1.0,  roughness:0.12, env:1.5,  spin:0.40, emissive:"#7c2d12", emissiveIntensity:0.18 },
-      5:  { shape:"octa",   detail:0, kind:"gem",   c1:"#5eead4", c2:"#0f766e", transmission:0.88, ior:1.75, thickness:1.4, env:1.5, spin:0.45, emissiveIntensity:0.15 },
-      6:  { shape:"dodeca", detail:0, kind:"gem",   c1:"#4ade80", c2:"#14532d", transmission:0.92, ior:1.78, thickness:1.6, env:1.6, spin:0.50, emissiveIntensity:0.22 },
-      7:  { shape:"octa",   detail:1, kind:"gem",   c1:"#67e8f9", c2:"#0e7490", transmission:0.95, ior:2.41, thickness:1.7, env:1.7, spin:0.55, dispersion:0.55, emissiveIntensity:0.20 },
-      8:  { shape:"icosa",  detail:0, kind:"gem",   c1:"#d8b4fe", c2:"#6b21a8", transmission:0.92, ior:1.85, thickness:1.6, env:1.6, spin:0.55, emissiveIntensity:0.35 },
-      9:  { shape:"dodeca", detail:0, kind:"gem",   c1:"#fca5a5", c2:"#7f1d1d", transmission:0.88, ior:1.88, thickness:1.6, env:1.7, spin:0.60, emissiveIntensity:0.45 },
-      10: { shape:"icosa",  detail:1, kind:"gem",   c1:"#fbbf24", c2:"#b91c1c", transmission:0.99, ior:2.10, thickness:1.7, env:0.9, spin:0.70, dispersion:0.7, emissiveIntensity:0.7, halo:true },
+      5:  { shape:"octa",   detail:0, kind:"gem",   c1:"#5eead4", c2:"#0f766e", transmission:0.82, ior:1.85, thickness:1.6, attenuation:0.55, env:2.4, spin:0.45, emissiveIntensity:0.08, iridescence:0.35, specularIntensity:1.0 },
+      6:  { shape:"dodeca", detail:0, kind:"gem",   c1:"#4ade80", c2:"#14532d", transmission:0.85, ior:1.90, thickness:1.7, attenuation:0.50, env:2.5, spin:0.50, emissiveIntensity:0.10, iridescence:0.30, specularIntensity:1.0 },
+      7:  { shape:"octa",   detail:1, kind:"gem",   c1:"#67e8f9", c2:"#0e7490", transmission:0.90, ior:2.41, thickness:1.8, attenuation:0.65, env:2.8, spin:0.55, dispersion:0.7, emissiveIntensity:0.06, iridescence:0.55, specularIntensity:1.0 },
+      8:  { shape:"icosa",  detail:0, kind:"gem",   c1:"#d8b4fe", c2:"#6b21a8", transmission:0.84, ior:1.95, thickness:1.7, attenuation:0.50, env:2.5, spin:0.55, emissiveIntensity:0.10, iridescence:0.45, specularIntensity:1.0 },
+      9:  { shape:"dodeca", detail:0, kind:"gem",   c1:"#fca5a5", c2:"#7f1d1d", transmission:0.80, ior:2.00, thickness:1.8, attenuation:0.45, env:2.6, spin:0.60, emissiveIntensity:0.12, iridescence:0.35, specularIntensity:1.0, specularColor:"#fff1c2" },
+      10: { shape:"icosa",  detail:1, kind:"gem",   c1:"#fde68a", c2:"#7f1d1d", transmission:0.78, ior:2.30, thickness:1.9, attenuation:0.40, env:3.0, spin:0.70, dispersion:0.9, emissiveIntensity:0.10, iridescence:0.55, specularIntensity:1.0, specularColor:"#ffe07a", halo:true },
     };
 
     function makeGeometry(cfg) {
@@ -2002,17 +2006,30 @@
       const m = new THREE.MeshPhysicalMaterial({
         color: new THREE.Color(cfg.c1),
         metalness: 0,
-        roughness: 0.02,
+        roughness: 0.015,
         transmission: cfg.transmission,
         ior: cfg.ior,
         thickness: cfg.thickness,
         clearcoat: 1,
         clearcoatRoughness: 0,
+        // Tinted specular so reflections take on the gem's hue instead of
+        // a uniform white wash — this is the "luster" cue.
+        specularIntensity: cfg.specularIntensity ?? 1.0,
+        specularColor: new THREE.Color(cfg.specularColor || "#ffffff"),
         attenuationColor: new THREE.Color(cfg.c2),
-        attenuationDistance: 1.6,
+        // Shorter attenuation = deeper interior color. 1.6 was too long
+        // for a unit gem and left the body looking milky / colorless.
+        attenuationDistance: cfg.attenuation ?? 0.55,
         envMapIntensity: cfg.env,
-        emissive: new THREE.Color(cfg.c1),
+        // Inner glow uses the DARK c2 color (not the bright c1) so the
+        // emissive deepens the body instead of bleaching it.
+        emissive: new THREE.Color(cfg.c2),
         emissiveIntensity: cfg.emissiveIntensity || 0,
+        // Thin-film iridescence adds a colored sheen across facets —
+        // the surface highlight that says "cut gemstone" instead of "glass".
+        iridescence: cfg.iridescence || 0,
+        iridescenceIOR: 1.3,
+        iridescenceThicknessRange: [100, 400],
         flatShading: true,
       });
       if (cfg.dispersion != null && "dispersion" in m) m.dispersion = cfg.dispersion;
@@ -2032,7 +2049,7 @@
       const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.15;
+      renderer.toneMappingExposure = 1.35;
 
       const scene = new THREE.Scene();
 
@@ -2050,15 +2067,23 @@
       //   key  → strong warm directional, casts the bright facet highlights
       //   fill → cool counter-light so the dark side isn't pitch black
       //   rim  → tier-tinted back light that picks out silhouette edges
-      const keyLight = new THREE.DirectionalLight(0xfff2dd, 2.0);
+      const keyLight = new THREE.DirectionalLight(0xfff2dd, 2.6);
       keyLight.position.set(3, 4, 3);
       scene.add(keyLight);
-      const fillLight = new THREE.DirectionalLight(0x6688cc, 0.75);
+      // Cooler fill kept dim so it carves a shadow side instead of
+      // washing the gem with desaturated blue (the old 0.75 was the
+      // main source of the milky look).
+      const fillLight = new THREE.DirectionalLight(0x8aa3d6, 0.35);
       fillLight.position.set(-3, -1, 2);
       scene.add(fillLight);
-      const rim = new THREE.PointLight(0xffffff, 2.0, 12);
+      const rim = new THREE.PointLight(0xffffff, 3.0, 12);
       rim.position.set(-1.5, 0.5, -2.5);
       scene.add(rim);
+      // Tight specular sparkle near the camera — makes individual facets
+      // catch a hot pinpoint highlight as the gem rotates.
+      const sparkle = new THREE.PointLight(0xffffff, 1.8, 8);
+      sparkle.position.set(1.2, 1.6, 3.5);
+      scene.add(sparkle);
 
       // Sprite-based bloom glow used by halo'd tiers. Generated once per
       // mount, swapped color per build(). Lives inside the camera frustum
@@ -2108,14 +2133,17 @@
         mesh = new THREE.Mesh(geo, makeMaterial(cfg));
         scene.add(mesh);
 
-        // Wireframe edge overlay — cheap way to keep facet borders crisp
-        // even on translucent gems where transmission washes out shading.
-        const edgeColor = new THREE.Color(cfg.c1).lerp(new THREE.Color(0xffffff), 0.5);
+        // Wireframe edge overlay — kept dim and tinted with the deep c2
+        // (instead of a near-white lerp) so it sharpens facet borders
+        // without adding a pale wash on top of the gem.
+        const edgeColor = cfg.kind === "gem"
+          ? new THREE.Color(cfg.c1).lerp(new THREE.Color(cfg.c2), 0.35)
+          : new THREE.Color(cfg.c1).lerp(new THREE.Color(0xffffff), 0.5);
         const edgeGeo = new THREE.EdgesGeometry(geo, 1);
         const edgeMat = new THREE.LineBasicMaterial({
           color: edgeColor,
           transparent: true,
-          opacity: cfg.kind === "gem" ? 0.55 : 0.30,
+          opacity: cfg.kind === "gem" ? 0.28 : 0.30,
           depthWrite: false,
         });
         edges = new THREE.LineSegments(edgeGeo, edgeMat);
@@ -2125,7 +2153,9 @@
         // Tier-tinted rim picks out the silhouette — gems get a brighter
         // wash so the glass picks up colored edges.
         rim.color.set(cfg.c1);
-        rim.intensity = cfg.kind === "gem" ? 2.4 : 1.6;
+        rim.intensity = cfg.kind === "gem" ? 3.2 : 1.6;
+        sparkle.color.set(cfg.kind === "gem" ? 0xffffff : 0xfff5e0);
+        sparkle.intensity = cfg.kind === "gem" ? 2.4 : 1.4;
 
         if (cfg.halo) {
           const glowMat = new THREE.SpriteMaterial({
