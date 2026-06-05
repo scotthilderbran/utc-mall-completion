@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UTC Mall Tier List</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --bg-2: #131a2e;
+    --panel: #1a2240;
+    --panel-2: #222b4d;
+    --border: #2a345c;
+    --text: #e8ecff;
+    --muted: #8590b8;
+    --accent: #5eead4;
+    --accent-2: #818cf8;
+    --danger: #fb7185;
+
+    --tier-s: #ff5d6c;
+    --tier-a: #ff9b53;
+    --tier-b: #ffd24a;
+    --tier-c: #6fdc6f;
+    --tier-d: #5eb4ff;
+    --tier-f: #a07eff;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(94,234,212,0.08), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(129,140,248,0.10), transparent 45%),
+      var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+
+  /* ===== Header ===== */
+  .title-block {
+    max-width: 760px;
+    margin: 0 auto 28px;
+    text-align: center;
+  }
+  .title-block h1 {
+    margin: 0 0 8px;
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .title-block .sub {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .title-block .sub strong { color: var(--text); }
+  .nav-link {
+    display: inline-block;
+    margin-top: 14px;
+    color: var(--accent);
+    font-size: 14px;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 7px 14px;
+    border-radius: 999px;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  }
+  .nav-link:hover {
+    background: rgba(94,234,212,0.08);
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  /* ===== Tier rows ===== */
+  .tiers {
+    margin-bottom: 28px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .tier-row {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    border-bottom: 1px solid var(--border);
+    min-height: 92px;
+  }
+  .tier-row:last-child { border-bottom: none; }
+  .tier-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 38px;
+    font-weight: 900;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #0b1020;
+    background: var(--tier-color);
+    letter-spacing: -0.02em;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.2);
+  }
+  .tier-row[data-tier="S"] { --tier-color: var(--tier-s); }
+  .tier-row[data-tier="A"] { --tier-color: var(--tier-a); }
+  .tier-row[data-tier="B"] { --tier-color: var(--tier-b); }
+  .tier-row[data-tier="C"] { --tier-color: var(--tier-c); }
+  .tier-row[data-tier="D"] { --tier-color: var(--tier-d); }
+  .tier-row[data-tier="F"] { --tier-color: var(--tier-f); }
+
+  .tier-drop {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+    background: var(--bg-2);
+    align-content: flex-start;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+  }
+  .tier-drop.drop-hover {
+    background: rgba(94, 234, 212, 0.10);
+    box-shadow: inset 0 0 0 2px var(--accent);
+  }
+
+  /* ===== Restaurant chip cards ===== */
+  .chip-card {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 2px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 12px;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    min-width: 140px;
+    max-width: 220px;
+    transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  }
+  .chip-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .chip-card.dragging {
+    opacity: 0.35;
+    cursor: grabbing;
+  }
+  .chip-card .c-name {
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 1.25;
+  }
+  .chip-card .c-cat {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .chip-card { position: relative; padding-right: 26px; }
+  .chip-card.visited {
+    border-color: rgba(94,234,212,0.55);
+    background: linear-gradient(135deg, rgba(94,234,212,0.10), rgba(129,140,248,0.06));
+  }
+  .chip-card .visited-mark {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #0b1020;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .chip-card .visited-mark svg {
+    width: 10px;
+    height: 10px;
+  }
+  .chip-card.visited .visited-mark { display: inline-flex; }
+
+  /* ===== Pool ===== */
+  .pool-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .pool-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .pool-count {
+    color: var(--muted);
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .controls {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr auto;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .control {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .control:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(94,234,212,0.15);
+  }
+  select.control { cursor: pointer; }
+  button.control {
+    cursor: pointer;
+    background: var(--panel-2);
+    font-weight: 600;
+  }
+  button.control:hover { border-color: var(--accent); }
+  button.danger {
+    color: var(--danger);
+    border-color: rgba(251,113,133,0.3);
+  }
+  button.danger:hover {
+    background: rgba(251,113,133,0.08);
+    border-color: var(--danger);
+  }
+
+  .cat-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .cat-chip {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+  }
+  .cat-chip:hover { color: var(--text); border-color: var(--accent); }
+  .cat-chip.active {
+    background: linear-gradient(90deg, rgba(94,234,212,0.18), rgba(129,140,248,0.18));
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .pool-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 88px;
+    padding: 12px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+  }
+  .pool-grid.drop-hover {
+    background: rgba(94, 234, 212, 0.10);
+    box-shadow: inset 0 0 0 2px var(--accent);
+  }
+  .pool-empty {
+    color: var(--muted);
+    font-size: 14px;
+    width: 100%;
+    text-align: center;
+    padding: 22px 0;
+  }
+
+  /* ===== Tier picker (tap-to-rank, mobile-friendly) ===== */
+  .picker-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .picker-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .picker {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    padding: 20px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.5);
+    transform: translateY(100%);
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .picker-overlay.active .picker { transform: translateY(0); }
+  .picker-title {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 4px;
+  }
+  .picker-name {
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 16px;
+    line-height: 1.25;
+  }
+  .picker-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .picker-btn {
+    font-size: 22px;
+    font-weight: 900;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    padding: 16px 0;
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.2);
+    color: #0b1020;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+  }
+  .picker-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+  }
+  .picker-btn:active { transform: translateY(0); }
+  .picker-btn.current {
+    box-shadow: 0 0 0 3px var(--accent);
+  }
+  .picker-btn[data-tier="S"] { background: var(--tier-s); }
+  .picker-btn[data-tier="A"] { background: var(--tier-a); }
+  .picker-btn[data-tier="B"] { background: var(--tier-b); }
+  .picker-btn[data-tier="C"] { background: var(--tier-c); }
+  .picker-btn[data-tier="D"] { background: var(--tier-d); }
+  .picker-btn[data-tier="F"] { background: var(--tier-f); }
+  .picker-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .picker-action {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .picker-action:hover {
+    color: var(--text);
+    border-color: var(--accent);
+  }
+  .picker-action.unrank:hover {
+    color: var(--danger);
+    border-color: var(--danger);
+    background: rgba(251,113,133,0.08);
+  }
+
+  /* ===== Footer ===== */
+  .footnote {
+    margin-top: 28px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 720px) {
+    .container { padding: 24px 16px 60px; }
+    .title-block h1 { font-size: 28px; }
+    .tier-row { grid-template-columns: 56px 1fr; min-height: 76px; }
+    .tier-label { font-size: 28px; }
+    .controls { grid-template-columns: 1fr 1fr; }
+    .controls .control:first-child { grid-column: 1 / -1; }
+    .chip-card { min-width: 124px; padding: 7px 10px; }
+    .picker-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="title-block">
+    <h1>UTC Mall Tier List</h1>
+    <p class="sub">
+      Rank every spot at <strong>Westfield UTC</strong> from <strong>S</strong>
+      (transcendent) down to <strong>F</strong> (avoid). Drag from the pool
+      into a tier — or tap a card to pick. Rankings save automatically.
+    </p>
+    <a class="nav-link" href="index.html">← Back to tracker</a>
+  </div>
+
+  <div class="tiers" id="tiers"></div>
+
+  <div class="pool-header">
+    <h2>Unranked</h2>
+    <span class="pool-count" id="poolCount">0</span>
+  </div>
+
+  <div class="controls">
+    <input id="search" class="control" type="search" placeholder="Search by name…" autocomplete="off" />
+    <select id="visibility" class="control" aria-label="Filter visibility">
+      <option value="unranked">Show: Unranked only</option>
+      <option value="all">Show: All</option>
+    </select>
+    <button id="reset" class="control danger" title="Clear all rankings">Reset</button>
+  </div>
+
+  <div class="cat-chips" id="catChips"></div>
+
+  <div class="pool-grid" id="pool"></div>
+
+  <p class="footnote">
+    Rankings live in this browser only. Click a card in any tier to move it or
+    send it back to the pool.
+  </p>
+</div>
+
+<div class="picker-overlay" id="pickerOverlay" aria-hidden="true">
+  <div class="picker" role="dialog" aria-modal="true" aria-labelledby="pickerName">
+    <div class="picker-title">Rank this spot</div>
+    <div class="picker-name" id="pickerName"></div>
+    <div class="picker-grid">
+      <button class="picker-btn" data-tier="S">S</button>
+      <button class="picker-btn" data-tier="A">A</button>
+      <button class="picker-btn" data-tier="B">B</button>
+      <button class="picker-btn" data-tier="C">C</button>
+      <button class="picker-btn" data-tier="D">D</button>
+      <button class="picker-btn" data-tier="F">F</button>
+    </div>
+    <div class="picker-actions">
+      <button class="picker-action unrank" id="pickerUnrank">Unrank</button>
+      <button class="picker-action" id="pickerCancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="restaurants.js"></script>
+<script>
+  const TIERS = ["S", "A", "B", "C", "D", "F"];
+  const STORAGE_KEY = "utc-dining-tiers-v1";
+
+  let tiers = loadTiers(); // { [restaurantName]: 'S' | 'A' | ... }
+  let activeCategory = "All";
+
+  function loadTiers() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return (parsed && typeof parsed === "object") ? parsed : {};
+    } catch { return {}; }
+  }
+  function saveTiers() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tiers)); } catch {}
+  }
+
+  // ===== DOM =====
+  const tiersEl = document.getElementById("tiers");
+  const poolEl = document.getElementById("pool");
+  const poolCountEl = document.getElementById("poolCount");
+  const catChipsEl = document.getElementById("catChips");
+  const searchEl = document.getElementById("search");
+  const visibilityEl = document.getElementById("visibility");
+  const resetBtn = document.getElementById("reset");
+  const pickerOverlay = document.getElementById("pickerOverlay");
+  const pickerNameEl = document.getElementById("pickerName");
+  const pickerBtns = document.querySelectorAll(".picker-btn");
+
+  // ===== Build tier rows once =====
+  for (const t of TIERS) {
+    const row = document.createElement("div");
+    row.className = "tier-row";
+    row.dataset.tier = t;
+    row.innerHTML = `
+      <div class="tier-label">${t}</div>
+      <div class="tier-drop" data-tier="${t}"></div>
+    `;
+    tiersEl.appendChild(row);
+  }
+
+  // ===== Helpers =====
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[c]));
+  }
+
+  function categories() {
+    const set = new Set(RESTAURANTS.map(r => r.category));
+    return ["All", ...[...set].sort()];
+  }
+
+  function renderCatChips() {
+    catChipsEl.innerHTML = "";
+    for (const cat of categories()) {
+      const btn = document.createElement("button");
+      btn.className = "cat-chip" + (cat === activeCategory ? " active" : "");
+      btn.textContent = cat;
+      btn.addEventListener("click", () => {
+        activeCategory = cat;
+        renderCatChips();
+        renderAll();
+      });
+      catChipsEl.appendChild(btn);
+    }
+  }
+
+  // Build a draggable, clickable chip for a restaurant.
+  function makeCard(r) {
+    const card = document.createElement("div");
+    card.className = "chip-card";
+    card.draggable = true;
+    card.dataset.name = r.name;
+    card.setAttribute("role", "button");
+    card.setAttribute("tabindex", "0");
+    card.setAttribute(
+      "aria-label",
+      `${r.name}, ${r.category}. ${tiers[r.name] ? "Ranked " + tiers[r.name] : "Unranked"}. Press to change.`
+    );
+    card.innerHTML = `
+      <div class="c-name">${escapeHtml(r.name)}</div>
+      <div class="c-cat">${escapeHtml(r.category)}</div>
+    `;
+
+    card.addEventListener("dragstart", (e) => {
+      card.classList.add("dragging");
+      e.dataTransfer.setData("text/plain", r.name);
+      e.dataTransfer.effectAllowed = "move";
+    });
+    card.addEventListener("dragend", () => {
+      card.classList.remove("dragging");
+    });
+    card.addEventListener("click", () => openPicker(r));
+    card.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openPicker(r);
+      }
+    });
+    return card;
+  }
+
+  function renderAll() {
+    // Reset all drop zones
+    for (const t of TIERS) {
+      tiersEl.querySelector(`.tier-drop[data-tier="${t}"]`).innerHTML = "";
+    }
+    poolEl.innerHTML = "";
+
+    const q = searchEl.value.trim().toLowerCase();
+    const showAll = visibilityEl.value === "all";
+
+    // Tier zones: every ranked restaurant goes into its tier (filters
+    // only affect the pool, so tiers always show your full ranking).
+    const sortedByName = [...RESTAURANTS].sort((a, b) => a.name.localeCompare(b.name));
+    for (const r of sortedByName) {
+      const t = tiers[r.name];
+      if (!TIERS.includes(t)) continue;
+      const zone = tiersEl.querySelector(`.tier-drop[data-tier="${t}"]`);
+      zone.appendChild(makeCard(r));
+    }
+
+    // Pool: unranked (or all, if user chose "Show: All")
+    const poolList = sortedByName.filter(r => {
+      if (activeCategory !== "All" && r.category !== activeCategory) return false;
+      if (q && !r.name.toLowerCase().includes(q)) return false;
+      if (!showAll && TIERS.includes(tiers[r.name])) return false;
+      return true;
+    });
+
+    if (poolList.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "pool-empty";
+      const totalUnranked = RESTAURANTS.filter(r => !TIERS.includes(tiers[r.name])).length;
+      empty.textContent = showAll
+        ? "No spots match your filters."
+        : totalUnranked === 0
+          ? "All set — every spot is ranked."
+          : "No unranked spots match your filters.";
+      poolEl.appendChild(empty);
+    } else {
+      for (const r of poolList) poolEl.appendChild(makeCard(r));
+    }
+
+    const totalUnranked = RESTAURANTS.filter(r => !TIERS.includes(tiers[r.name])).length;
+    poolCountEl.textContent = `${totalUnranked} of ${RESTAURANTS.length} left`;
+  }
+
+  // ===== Drag-and-drop targets =====
+  // Each tier row's drop zone assigns that tier. The pool zone unranks.
+  function makeDroppable(el, assignTier) {
+    el.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      el.classList.add("drop-hover");
+    });
+    el.addEventListener("dragleave", (e) => {
+      if (!el.contains(e.relatedTarget)) el.classList.remove("drop-hover");
+    });
+    el.addEventListener("drop", (e) => {
+      e.preventDefault();
+      el.classList.remove("drop-hover");
+      const name = e.dataTransfer.getData("text/plain");
+      if (!name) return;
+      assign(name, assignTier);
+    });
+  }
+  for (const t of TIERS) {
+    makeDroppable(tiersEl.querySelector(`.tier-drop[data-tier="${t}"]`), t);
+  }
+  makeDroppable(poolEl, null);
+
+  function assign(name, tier) {
+    if (tier == null) delete tiers[name];
+    else tiers[name] = tier;
+    saveTiers();
+    renderAll();
+  }
+
+  // ===== Tier picker (tap-to-rank) =====
+  let pickerTarget = null;
+  function openPicker(r) {
+    pickerTarget = r;
+    pickerNameEl.textContent = r.name;
+    const current = tiers[r.name];
+    for (const b of pickerBtns) {
+      b.classList.toggle("current", b.dataset.tier === current);
+    }
+    pickerOverlay.classList.add("active");
+    pickerOverlay.setAttribute("aria-hidden", "false");
+  }
+  function closePicker() {
+    pickerOverlay.classList.remove("active");
+    pickerOverlay.setAttribute("aria-hidden", "true");
+    pickerTarget = null;
+  }
+  pickerOverlay.addEventListener("click", (e) => {
+    if (e.target === pickerOverlay) closePicker();
+  });
+  document.getElementById("pickerCancel").addEventListener("click", closePicker);
+  document.getElementById("pickerUnrank").addEventListener("click", () => {
+    if (pickerTarget) assign(pickerTarget.name, null);
+    closePicker();
+  });
+  for (const btn of pickerBtns) {
+    btn.addEventListener("click", () => {
+      if (pickerTarget) assign(pickerTarget.name, btn.dataset.tier);
+      closePicker();
+    });
+  }
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && pickerOverlay.classList.contains("active")) {
+      closePicker();
+    }
+  });
+
+  // ===== Controls =====
+  searchEl.addEventListener("input", renderAll);
+  visibilityEl.addEventListener("change", renderAll);
+  resetBtn.addEventListener("click", () => {
+    const count = Object.values(tiers).filter(t => TIERS.includes(t)).length;
+    if (count === 0) return;
+    if (confirm(`Clear all ${count} rankings? This can't be undone.`)) {
+      tiers = {};
+      saveTiers();
+      renderAll();
+    }
+  });
+
+  // ===== Init =====
+  renderCatChips();
+  renderAll();
+</script>
+</body>
+</html>
