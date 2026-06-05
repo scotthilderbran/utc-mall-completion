@@ -527,6 +527,253 @@
     .debug-panel input[type="range"] { width: 200px; }
     .debug-panel .debug-value { text-align: center; }
   }
+  .debug-panel button {
+    background: transparent;
+    border: 1px solid #f43f5e;
+    color: #f43f5e;
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .debug-panel button:hover { background: rgba(244, 63, 94, 0.15); }
+
+  /* ===== Rank-up promotion overlay ===== */
+  /* Uses the same per-tier palette as .rank-hero — c1/c2/c3/glow are set
+     by [data-tier] rules below. Animation is pure CSS keyframes so it
+     works in every evergreen browser (Chrome, Safari, Firefox, Edge). */
+  .promo-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    --c1: #f1f5f9; --c2: #94a3b8; --c3: #475569;
+    --glow: rgba(148, 163, 184, 0.4);
+  }
+  .promo-overlay.active { pointer-events: auto; cursor: pointer; }
+  .promo-overlay.dismissing {
+    animation: promoOut 0.35s ease forwards;
+    pointer-events: none;
+  }
+  @keyframes promoOut { to { opacity: 0; } }
+
+  .promo-backdrop {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at center,
+        color-mix(in srgb, var(--c2) 18%, transparent),
+        rgba(0, 0, 0, 0.88) 60%);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .promo-overlay.active .promo-backdrop { opacity: 1; }
+
+  .promo-stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 0 20px;
+  }
+
+  /* Sunburst rays — annular ring of slices, slowly rotating */
+  .promo-rays-wrap {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: min(680px, 90vw);
+    aspect-ratio: 1 / 1;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    opacity: 0;
+  }
+  .promo-overlay.active .promo-rays-wrap {
+    animation: raysSpin 18s linear infinite,
+               raysFadeIn 0.8s ease-out 0.35s forwards;
+  }
+  @keyframes raysSpin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+  @keyframes raysFadeIn { to { opacity: 0.55; } }
+  .promo-rays {
+    width: 100%; height: 100%;
+    background: repeating-conic-gradient(
+      from 0deg,
+      color-mix(in srgb, var(--c1) 55%, transparent) 0deg 4deg,
+      transparent 4deg 18deg
+    );
+    -webkit-mask: radial-gradient(circle,
+      transparent 12%, #000 18%, #000 48%, transparent 56%);
+    mask: radial-gradient(circle,
+      transparent 12%, #000 18%, #000 48%, transparent 56%);
+    transform: scale(0.4);
+    transform-origin: center;
+    animation: raysGrow 1.0s cubic-bezier(0.22, 1, 0.36, 1) 0.35s forwards;
+  }
+  @keyframes raysGrow { to { transform: scale(1); } }
+
+  .promo-header {
+    font-size: clamp(18px, 2.4vw, 28px);
+    font-weight: 800;
+    letter-spacing: 0.45em;
+    color: var(--c1);
+    text-transform: uppercase;
+    text-shadow: 0 0 24px var(--c2);
+    margin-bottom: 6px;
+    transform: translateY(-40px);
+    opacity: 0;
+  }
+  .promo-overlay.active .promo-header {
+    animation: promoHeaderIn 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s forwards;
+  }
+  @keyframes promoHeaderIn { to { transform: translateY(0); opacity: 1; } }
+
+  .promo-badge {
+    width: clamp(180px, 32vw, 300px);
+    aspect-ratio: 1 / 1;
+    filter: drop-shadow(0 0 36px var(--c2))
+            drop-shadow(0 0 12px var(--c1));
+    transform: scale(0) rotate(-200deg);
+    opacity: 0;
+    z-index: 2;
+  }
+  .promo-badge svg { width: 100%; height: 100%; display: block; }
+  .promo-overlay.active .promo-badge {
+    animation: badgeIn 0.95s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s forwards,
+               badgeFloat 4s ease-in-out 1.4s infinite;
+  }
+  @keyframes badgeIn { to { transform: scale(1) rotate(0deg); opacity: 1; } }
+  @keyframes badgeFloat {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50%      { transform: translateY(-8px) scale(1.02); }
+  }
+
+  /* Radial shards bursting outward from badge center */
+  .promo-shards {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 0; height: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .promo-shard {
+    position: absolute;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--c1);
+    box-shadow: 0 0 16px var(--c2), 0 0 28px var(--c1);
+    transform: rotate(var(--angle, 0deg)) translateY(-40px) scale(0);
+    opacity: 0;
+    top: -6px; left: -6px;
+  }
+  .promo-overlay.active .promo-shard {
+    animation: shardBurst 1.4s cubic-bezier(0.18, 0.78, 0.32, 1) forwards;
+    animation-delay: calc(0.7s + var(--delay, 0ms));
+  }
+  @keyframes shardBurst {
+    0%   { transform: rotate(var(--angle, 0deg)) translateY(-40px) scale(0);   opacity: 0; }
+    18%  { transform: rotate(var(--angle, 0deg)) translateY(-120px) scale(1.2); opacity: 1; }
+    100% { transform: rotate(var(--angle, 0deg)) translateY(-320px) scale(0);  opacity: 0; }
+  }
+
+  .promo-tier-name {
+    margin-top: 16px;
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    background: linear-gradient(90deg, var(--c1), var(--c2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: var(--c1);
+    text-shadow: 0 0 24px var(--glow);
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  .promo-overlay.active .promo-tier-name {
+    animation: tierNameIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.1s forwards;
+  }
+  @keyframes tierNameIn {
+    to { opacity: 1; transform: scale(1); letter-spacing: 0.22em; }
+  }
+
+  .promo-flavor {
+    font-size: clamp(13px, 1.5vw, 17px);
+    color: var(--c1);
+    opacity: 0;
+    margin-top: -2px;
+    letter-spacing: 0.02em;
+  }
+  .promo-overlay.active .promo-flavor {
+    animation: flavorIn 0.6s ease-out 1.7s forwards;
+  }
+  @keyframes flavorIn { to { opacity: 0.85; } }
+
+  .promo-hint {
+    position: absolute;
+    bottom: 8vh;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    color: var(--muted);
+    text-transform: uppercase;
+    opacity: 0;
+    white-space: nowrap;
+  }
+  .promo-overlay.active .promo-hint {
+    animation: hintIn 0.6s ease-out 2.6s forwards,
+               hintPulse 2.4s ease-in-out 3.2s infinite;
+  }
+  @keyframes hintIn { to { opacity: 0.65; } }
+  @keyframes hintPulse {
+    0%, 100% { opacity: 0.35; }
+    50%      { opacity: 0.85; }
+  }
+
+  /* Tier-10 (Challenger) overlay gets the same animated pulse */
+  .promo-overlay[data-tier="10"] .promo-badge {
+    filter: drop-shadow(0 0 48px var(--c2))
+            drop-shadow(0 0 18px #fef3c7);
+  }
+
+  /* Per-tier palettes for the overlay — mirror .rank-hero */
+  .promo-overlay[data-tier="1"]  { --c1: #d6d3d1; --c2: #a8a29e; --c3: #57534e; --glow: rgba(168, 162, 158, 0.35); }
+  .promo-overlay[data-tier="2"]  { --c1: #fde2c0; --c2: #d4a574; --c3: #6b4423; --glow: rgba(212, 165, 116, 0.45); }
+  .promo-overlay[data-tier="3"]  { --c1: #f1f5f9; --c2: #cbd5e1; --c3: #475569; --glow: rgba(203, 213, 225, 0.45); }
+  .promo-overlay[data-tier="4"]  { --c1: #fde68a; --c2: #fbbf24; --c3: #92400e; --glow: rgba(251, 191, 36, 0.55); }
+  .promo-overlay[data-tier="5"]  { --c1: #ccfbf1; --c2: #5eead4; --c3: #115e59; --glow: rgba(94, 234, 212, 0.55); }
+  .promo-overlay[data-tier="6"]  { --c1: #bbf7d0; --c2: #4ade80; --c3: #166534; --glow: rgba(34, 197, 94, 0.55); }
+  .promo-overlay[data-tier="7"]  { --c1: #a5f3fc; --c2: #22d3ee; --c3: #0e7490; --glow: rgba(34, 211, 238, 0.6); }
+  .promo-overlay[data-tier="8"]  { --c1: #e9d5ff; --c2: #c084fc; --c3: #6b21a8; --glow: rgba(168, 85, 247, 0.6); }
+  .promo-overlay[data-tier="9"]  { --c1: #fecaca; --c2: #ef4444; --c3: #7f1d1d; --glow: rgba(239, 68, 68, 0.65); }
+  .promo-overlay[data-tier="10"] { --c1: #fef3c7; --c2: #fbbf24; --c3: #b91c1c; --glow: rgba(251, 191, 36, 0.75); }
+
+  /* Accessibility: collapse animations for users who request reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .promo-overlay *,
+    .promo-overlay.active * {
+      animation-duration: 0.01ms !important;
+      animation-delay: 0ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    .promo-overlay.active .promo-header,
+    .promo-overlay.active .promo-badge,
+    .promo-overlay.active .promo-tier-name,
+    .promo-overlay.active .promo-flavor,
+    .promo-overlay.active .promo-hint {
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -923,9 +1170,23 @@
 
   // ===== State =====
   const STORAGE_KEY = "utc-dining-progress-v1";
+  const PROMO_KEY = "utc-dining-highest-tier-v1";
   const DEBUG = new URLSearchParams(location.search).has("debug");
   let visited = new Set(loadProgress());
   let activeCategory = "All";
+  let highestSeenTier = loadHighestTier();
+
+  function loadHighestTier() {
+    try {
+      const raw = localStorage.getItem(PROMO_KEY);
+      const n = parseInt(raw || "0", 10);
+      return Number.isFinite(n) ? n : 0;
+    } catch { return 0; }
+  }
+  function saveHighestTier() {
+    if (DEBUG) return;
+    try { localStorage.setItem(PROMO_KEY, String(highestSeenTier)); } catch {}
+  }
 
   function loadProgress() {
     try {
@@ -981,7 +1242,7 @@
   const DIVISIONS = ["IV", "III", "II", "I"];
   const SILLY_NAMES = [
     { min: 0,    name: "Mall Civilian"     },
-    { min: 0.01, name: "Certified Mall Enthusiast"  },
+    { min: 0.1, name: "Certified Mall Enthusiast"  },
     { min: 0.25, name: "Mallrat"    },
     { min: 0.50, name: "Friend of Chef Fei"       },
     { min: 0.75, name: "S+ Rank Mall God"           },
@@ -1127,6 +1388,7 @@
     ring.style.stroke = complete ? "url(#ringGoldGradient)" : "url(#ringGradient)";
 
     maybeFireMilestone(done, total);
+    maybeFirePromotion(rank);
   }
 
   function escapeHtml(s) {
@@ -1144,6 +1406,9 @@
     if (confirm(`Clear all ${visited.size} visited spots? This can't be undone.`)) {
       visited.clear();
       saveProgress();
+      highestSeenTier = 0;
+      promoInit = false;
+      try { localStorage.removeItem(PROMO_KEY); } catch {}
       updateProgress();
       renderGrid();
     }
@@ -1278,6 +1543,103 @@
     lastMilestone = reached;
   }
 
+  // ===== Rank-up promotion sequence =====
+  // Fires once per tier ever crossed (persisted in localStorage). The
+  // animation is pure CSS keyframes triggered by toggling a class on a
+  // dynamically-inserted overlay, so it works in Chrome, Safari, Firefox,
+  // and Edge without any modern-only APIs.
+  const TIER_SVG_CLASS = {
+    1: "tier-iron", 2: "tier-bronze", 3: "tier-silver", 4: "tier-gold",
+    5: "tier-platinum", 6: "tier-emerald", 7: "tier-diamond",
+    8: "tier-master", 9: "tier-grandmaster", 10: "tier-challenger",
+  };
+  let promoActive = false;
+  let promoInit = false;
+
+  function maybeFirePromotion(rank) {
+    if (DEBUG) return;                  // suppress while scrubbing the slider
+    // First call (on page load or after reset) silently baselines the tier
+    // so the initial Iron state isn't treated as a fresh promotion.
+    if (!promoInit) {
+      promoInit = true;
+      if (rank.tier > highestSeenTier) {
+        highestSeenTier = rank.tier;
+        saveHighestTier();
+      }
+      return;
+    }
+    if (rank.tier <= highestSeenTier) return;
+    highestSeenTier = rank.tier;
+    saveHighestTier();
+    firePromotion(rank);
+  }
+
+  function firePromotion(rank) {
+    if (promoActive) return;            // never stack multiple overlays
+    promoActive = true;
+
+    const overlay = document.createElement("div");
+    overlay.className = "promo-overlay";
+    overlay.setAttribute("data-tier", String(rank.tier));
+
+    const shards = [];
+    const SHARD_COUNT = 18;
+    for (let i = 0; i < SHARD_COUNT; i++) {
+      const angle = (i / SHARD_COUNT) * 360;
+      const delay = (i % 6) * 35;       // small stagger so they're not in lockstep
+      shards.push(
+        `<span class="promo-shard" style="--angle:${angle}deg;--delay:${delay}ms;"></span>`
+      );
+    }
+
+    overlay.innerHTML = `
+      <div class="promo-backdrop"></div>
+      <div class="promo-rays-wrap"><div class="promo-rays"></div></div>
+      <div class="promo-stage">
+        <div class="promo-header">Promotion</div>
+        <div class="promo-badge"></div>
+        <div class="promo-shards">${shards.join("")}</div>
+        <div class="promo-tier-name">${escapeHtml(rank.league)}</div>
+        <div class="promo-flavor">${escapeHtml(rank.name)}</div>
+      </div>
+      <div class="promo-hint">Click anywhere to continue</div>
+    `;
+
+    // Clone the matching tier badge SVG from the rank hero (already in DOM)
+    const srcSelector = ".rank-icon svg." + TIER_SVG_CLASS[rank.tier];
+    const src = document.querySelector(srcSelector);
+    if (src) {
+      const clone = src.cloneNode(true);
+      clone.style.display = "block";    // hero hides inactive tiers via CSS
+      overlay.querySelector(".promo-badge").appendChild(clone);
+    }
+
+    document.body.appendChild(overlay);
+    // Two RAFs so the initial styles apply before .active triggers transitions
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      overlay.classList.add("active");
+    }));
+
+    let dismissed = false;
+    const dismiss = () => {
+      if (dismissed) return;
+      dismissed = true;
+      overlay.classList.add("dismissing");
+      setTimeout(() => {
+        overlay.remove();
+        promoActive = false;
+      }, 400);
+    };
+    overlay.addEventListener("click", dismiss);
+    document.addEventListener("keydown", function onKey(e) {
+      if (e.key === "Escape" || e.key === "Enter" || e.key === " ") {
+        dismiss();
+        document.removeEventListener("keydown", onKey);
+      }
+    });
+    setTimeout(dismiss, 6000);          // auto-dismiss after 6s
+  }
+
   // ===== Holographic foil pointer tracking =====
   (function setupHolo() {
     let activeCard = null;
@@ -1329,11 +1691,16 @@
       <span class="debug-tag">Debug</span>
       <input type="range" id="debugSlider" min="0" max="${total}" value="${Math.min(visited.size, total)}" />
       <span class="debug-value"><span id="debugCount">${Math.min(visited.size, total)}</span> / ${total}</span>
+      <button type="button" id="debugPromo" title="Preview promotion animation for current tier">▶ Promo</button>
     `;
     document.body.appendChild(panel);
 
     const slider = panel.querySelector("#debugSlider");
     const countEl = panel.querySelector("#debugCount");
+    panel.querySelector("#debugPromo").addEventListener("click", () => {
+      const pct = total === 0 ? 0 : parseInt(slider.value, 10) / total;
+      firePromotion(getRank(pct));
+    });
     slider.addEventListener("input", () => {
       const n = parseInt(slider.value, 10);
       visited.clear();
