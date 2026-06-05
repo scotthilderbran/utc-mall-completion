@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a2240"/>
+      <stop offset="1" stop-color="#0b1020"/>
+    </linearGradient>
+    <linearGradient id="crown" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0"   stop-color="#fef3c7"/>
+      <stop offset="0.5" stop-color="#fbbf24"/>
+      <stop offset="1"   stop-color="#b45309"/>
+    </linearGradient>
+    <linearGradient id="band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbbf24"/>
+      <stop offset="1" stop-color="#92400e"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.55" r="0.55">
+      <stop offset="0" stop-color="#fbbf24" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#fbbf24" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <rect x="0.5" y="0.5" width="63" height="63" rx="13.5" fill="none" stroke="#2a345c"/>
+  <circle cx="32" cy="34" r="26" fill="url(#glow)"/>
+
+  <!-- Crown silhouette: 3 peaks with valleys -->
+  <path d="M10 50 L10 22 L22 32 L32 14 L42 32 L54 22 L54 50 Z"
+        fill="url(#crown)"
+        stroke="#7c2d12" stroke-width="1.2" stroke-linejoin="round"/>
+
+  <!-- Crown band -->
+  <rect x="10" y="40" width="44" height="10" fill="url(#band)"
+        stroke="#7c2d12" stroke-width="1.2" stroke-linejoin="round"/>
+
+  <!-- Jewels on each peak -->
+  <circle cx="10" cy="22" r="2.6" fill="#fef3c7" stroke="#7c2d12" stroke-width="0.8"/>
+  <circle cx="32" cy="14" r="3"   fill="#fecaca" stroke="#7c2d12" stroke-width="0.8"/>
+  <circle cx="54" cy="22" r="2.6" fill="#fef3c7" stroke="#7c2d12" stroke-width="0.8"/>
+
+  <!-- Center band jewel -->
+  <circle cx="32" cy="45" r="3" fill="#ef4444" stroke="#7c2d12" stroke-width="0.9"/>
+
+  <!-- Sparkle -->
+  <path d="M52 8 L53 11 L56 12 L53 13 L52 16 L51 13 L48 12 L51 11 Z"
+        fill="#fef3c7" opacity="0.9"/>
+</svg>

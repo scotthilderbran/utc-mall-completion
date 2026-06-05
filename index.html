@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <title>UTC Mall Ranked</title>
 <style>
   :root {
@@ -121,6 +122,14 @@
     height: 100%;
     display: none;
   }
+  .rank-icon canvas.rank-3d {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .rank-icon.has3d svg { display: none !important; }
   .rank-text {
     display: flex;
     flex-direction: column;
@@ -190,7 +199,7 @@
     height: 180px;
     flex-shrink: 0;
   }
-  .ring-wrap svg {
+  .ring-wrap > svg {
     transform: rotate(-90deg);
     width: 100%;
     height: 100%;
@@ -660,7 +669,16 @@
     opacity: 0;
     z-index: 2;
   }
+  .promo-badge { position: relative; }
   .promo-badge svg { width: 100%; height: 100%; display: block; }
+  .promo-badge canvas.rank-3d {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .promo-badge.has3d > svg { display: none !important; }
   .promo-overlay.active .promo-badge {
     animation: badgeIn 0.95s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s forwards,
                badgeFloat 4s ease-in-out 1.4s infinite;
@@ -1556,6 +1574,7 @@
     }
 
     document.body.appendChild(overlay);
+    window.RankBadge3D?.mount?.(overlay.querySelector(".promo-badge"), rank.tier);
     // Two RAFs so the initial styles apply before .active triggers transitions
     requestAnimationFrame(() => requestAnimationFrame(() => {
       overlay.classList.add("active");
@@ -1650,6 +1669,260 @@
       renderGrid();
       updateProgress();
     });
+  }
+</script>
+
+<!-- ===== 3D rank badges (three.js) =====
+     Renders the active tier as a real 3D gem with environment-mapped
+     reflections. Falls back silently to the existing SVG badges if WebGL
+     is unavailable or the user prefers reduced motion. -->
+<script type="module">
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const hasWebGL = (() => {
+    try {
+      const c = document.createElement("canvas");
+      return !!(c.getContext("webgl2") || c.getContext("webgl"));
+    } catch { return false; }
+  })();
+  if (!hasWebGL) { /* leave the SVG fallback in place */ }
+  else {
+    const THREE = await import("https://esm.sh/three@0.170.0");
+    const { RoomEnvironment } = await import("https://esm.sh/three@0.170.0/examples/jsm/environments/RoomEnvironment.js");
+
+    // Per-tier 3D config. Shapes are platonic solids — switching among
+    // octa/icosa/dodeca + subdivision gives each rank a distinct silhouette
+    // without bundling any models. Materials split into "metal" (low tiers,
+    // MeshStandardMaterial) and "gem" (high tiers, MeshPhysicalMaterial
+    // with transmission so light passes through).
+    const PER_TIER = {
+      // Note: detail=0 keeps the shape as a true platonic solid (8/12/20
+      // big crisp facets). Higher detail subdivides toward a sphere and
+      // kills the gem feel, so we stay at 0–1 throughout.
+      1:  { shape:"octa",   detail:0, kind:"metal", c1:"#cfc8c0", c2:"#3b322a", metalness:0.85, roughness:0.55, env:0.9,  spin:0.25 },
+      2:  { shape:"octa",   detail:0, kind:"metal", c1:"#e6b585", c2:"#5c3617", metalness:0.95, roughness:0.30, env:1.2,  spin:0.35 },
+      3:  { shape:"icosa",  detail:0, kind:"metal", c1:"#e7edf3", c2:"#475569", metalness:1.0,  roughness:0.18, env:1.4,  spin:0.40 },
+      4:  { shape:"dodeca", detail:0, kind:"metal", c1:"#fcd34d", c2:"#92400e", metalness:1.0,  roughness:0.12, env:1.5,  spin:0.40, emissive:"#7c2d12", emissiveIntensity:0.18 },
+      5:  { shape:"octa",   detail:0, kind:"gem",   c1:"#5eead4", c2:"#0f766e", transmission:0.88, ior:1.75, thickness:1.4, env:1.5, spin:0.45, emissiveIntensity:0.15 },
+      6:  { shape:"dodeca", detail:0, kind:"gem",   c1:"#4ade80", c2:"#14532d", transmission:0.92, ior:1.78, thickness:1.6, env:1.6, spin:0.50, emissiveIntensity:0.22 },
+      7:  { shape:"octa",   detail:1, kind:"gem",   c1:"#67e8f9", c2:"#0e7490", transmission:0.95, ior:2.41, thickness:1.7, env:1.7, spin:0.55, dispersion:0.55, emissiveIntensity:0.20 },
+      8:  { shape:"icosa",  detail:0, kind:"gem",   c1:"#d8b4fe", c2:"#6b21a8", transmission:0.92, ior:1.85, thickness:1.6, env:1.6, spin:0.55, emissiveIntensity:0.35 },
+      9:  { shape:"dodeca", detail:0, kind:"gem",   c1:"#fca5a5", c2:"#7f1d1d", transmission:0.88, ior:1.88, thickness:1.6, env:1.7, spin:0.60, emissiveIntensity:0.45 },
+      10: { shape:"icosa",  detail:1, kind:"gem",   c1:"#fde68a", c2:"#b91c1c", transmission:0.55, ior:2.10, thickness:1.7, env:1.9, spin:0.70, dispersion:0.7, emissiveIntensity:0.7, halo:true },
+    };
+
+    function makeGeometry(cfg) {
+      switch (cfg.shape) {
+        case "icosa":  return new THREE.IcosahedronGeometry(1, cfg.detail);
+        case "dodeca": return new THREE.DodecahedronGeometry(1, cfg.detail);
+        default:       return new THREE.OctahedronGeometry(1, cfg.detail);
+      }
+    }
+
+    function makeMaterial(cfg) {
+      if (cfg.kind === "metal") {
+        return new THREE.MeshStandardMaterial({
+          color: new THREE.Color(cfg.c1),
+          metalness: cfg.metalness,
+          roughness: cfg.roughness,
+          emissive: new THREE.Color(cfg.emissive || "#000000"),
+          emissiveIntensity: cfg.emissiveIntensity || 0,
+          envMapIntensity: cfg.env,
+          flatShading: true,
+        });
+      }
+      const m = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color(cfg.c1),
+        metalness: 0,
+        roughness: 0.02,
+        transmission: cfg.transmission,
+        ior: cfg.ior,
+        thickness: cfg.thickness,
+        clearcoat: 1,
+        clearcoatRoughness: 0,
+        attenuationColor: new THREE.Color(cfg.c2),
+        attenuationDistance: 1.6,
+        envMapIntensity: cfg.env,
+        emissive: new THREE.Color(cfg.c1),
+        emissiveIntensity: cfg.emissiveIntensity || 0,
+        flatShading: true,
+      });
+      if (cfg.dispersion != null && "dispersion" in m) m.dispersion = cfg.dispersion;
+      return m;
+    }
+
+    function mount(container, initialTier) {
+      if (!container || container.dataset.has3d === "1") return null;
+      container.dataset.has3d = "1";
+      container.classList.add("has3d");
+
+      const canvas = document.createElement("canvas");
+      canvas.className = "rank-3d";
+      canvas.setAttribute("aria-hidden", "true");
+      container.appendChild(canvas);
+
+      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+
+      const scene = new THREE.Scene();
+
+      // Free environment map: a procedural room scene baked to a cubemap.
+      // No external HDRI fetch needed.
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      const envScene = new RoomEnvironment();
+      scene.environment = pmrem.fromScene(envScene, 0.04).texture;
+
+      const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+      camera.position.set(0, 0, 4.4);
+
+      // Tier-tinted rim light gives top tiers their signature glow
+      const rim = new THREE.PointLight(0xffffff, 1.2, 20);
+      rim.position.set(-2.5, 1, 2);
+      scene.add(rim);
+      const fill = new THREE.DirectionalLight(0xffffff, 0.35);
+      fill.position.set(2, 2, 3);
+      scene.add(fill);
+
+      let mesh = null;
+      let halo = null;
+      let cfgCurrent = null;
+
+      function build(tier) {
+        const cfg = PER_TIER[tier] || PER_TIER[1];
+        cfgCurrent = cfg;
+        if (mesh) {
+          scene.remove(mesh);
+          mesh.geometry.dispose();
+          mesh.material.dispose();
+        }
+        if (halo) {
+          scene.remove(halo);
+          halo.geometry.dispose();
+          halo.material.dispose();
+          halo = null;
+        }
+        mesh = new THREE.Mesh(makeGeometry(cfg), makeMaterial(cfg));
+        scene.add(mesh);
+        rim.color.set(cfg.c1);
+        rim.intensity = cfg.kind === "gem" ? 1.5 : 1.0;
+
+        if (cfg.halo) {
+          const haloGeo = new THREE.RingGeometry(1.45, 1.95, 128);
+          const haloMat = new THREE.MeshBasicMaterial({
+            color: new THREE.Color(cfg.c1),
+            transparent: true,
+            opacity: 0.85,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+          });
+          halo = new THREE.Mesh(haloGeo, haloMat);
+          halo.position.z = -0.4; // sit behind the gem
+          scene.add(halo);
+        }
+      }
+
+      function resize() {
+        const w = container.clientWidth || 1;
+        const h = container.clientHeight || w;
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      }
+      resize();
+      const ro = new ResizeObserver(resize);
+      ro.observe(container);
+
+      // Pointer parallax — gem tilts toward the cursor when hovered
+      let targetRX = 0, targetRY = 0, curRX = 0, curRY = 0;
+      const handlePointer = (e) => {
+        const rect = container.getBoundingClientRect();
+        const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+        targetRY = nx * 0.55;
+        targetRX = -ny * 0.40;
+      };
+      const handleLeave = () => { targetRX = 0; targetRY = 0; };
+      container.addEventListener("pointermove", handlePointer);
+      container.addEventListener("pointerleave", handleLeave);
+
+      // Pause when offscreen or tab hidden
+      let visible = true, onScreen = true, rafId = null;
+      const io = new IntersectionObserver(([entry]) => {
+        onScreen = entry.isIntersecting;
+        if (onScreen && visible && !rafId) loop();
+      });
+      io.observe(container);
+      const onVis = () => {
+        visible = !document.hidden;
+        if (visible && onScreen && !rafId) loop();
+      };
+      document.addEventListener("visibilitychange", onVis);
+
+      const start = performance.now();
+      function loop() {
+        rafId = null;
+        if (!visible || !onScreen) return;
+        const t = (performance.now() - start) * 0.001;
+
+        curRX += (targetRX - curRX) * 0.08;
+        curRY += (targetRY - curRY) * 0.08;
+
+        if (mesh) {
+          const spin = reducedMotion ? 0 : (cfgCurrent?.spin || 0.4);
+          mesh.rotation.x = curRX + Math.sin(t * 0.35) * 0.06;
+          mesh.rotation.y = curRY + t * spin;
+        }
+        if (halo) {
+          halo.rotation.z = t * 0.4;
+          halo.material.opacity = 0.7 + Math.sin(t * 2.2) * 0.2;
+        }
+
+        renderer.render(scene, camera);
+        rafId = requestAnimationFrame(loop);
+      }
+
+      build(initialTier);
+      loop();
+      // One static render guaranteed even if motion is reduced
+      renderer.render(scene, camera);
+
+      return {
+        setTier: (t) => build(t),
+        dispose: () => {
+          if (rafId) cancelAnimationFrame(rafId);
+          io.disconnect();
+          ro.disconnect();
+          document.removeEventListener("visibilitychange", onVis);
+          container.removeEventListener("pointermove", handlePointer);
+          container.removeEventListener("pointerleave", handleLeave);
+          if (mesh) { mesh.geometry.dispose(); mesh.material.dispose(); }
+          if (halo) { halo.geometry.dispose(); halo.material.dispose(); }
+          pmrem.dispose();
+          renderer.dispose();
+          canvas.remove();
+          container.classList.remove("has3d");
+          delete container.dataset.has3d;
+        },
+      };
+    }
+
+    window.RankBadge3D = { mount };
+
+    // Mount on the main rank hero and follow tier changes
+    const rankBadge = document.getElementById("rankBadge");
+    const rankIcon = rankBadge?.querySelector(".rank-icon");
+    if (rankIcon) {
+      const instance = mount(rankIcon, parseInt(rankBadge.dataset.tier, 10) || 1);
+      if (instance) {
+        const obs = new MutationObserver(() => {
+          const t = parseInt(rankBadge.dataset.tier, 10) || 1;
+          instance.setTier(t);
+        });
+        obs.observe(rankBadge, { attributes: true, attributeFilter: ["data-tier"] });
+      }
+    }
   }
 </script>
 </body>

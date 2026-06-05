@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <title>UTC Mall Tier List</title>
 <style>
   :root {
@@ -479,8 +480,12 @@
 <script>
   const TIERS = ["S", "A", "B", "C", "D", "F"];
   const STORAGE_KEY = "utc-dining-tiers-v1";
+  // Shares the tracker page's progress key so the "visited" indicator
+  // and visited-first sort reflect whatever you've ticked off there.
+  const VISITED_KEY = "utc-dining-progress-v1";
 
   let tiers = loadTiers(); // { [restaurantName]: 'S' | 'A' | ... }
+  let visited = loadVisited(); // Set<restaurantName>
   let activeCategory = "All";
 
   function loadTiers() {
@@ -494,6 +499,29 @@
   function saveTiers() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tiers)); } catch {}
   }
+  function loadVisited() {
+    try {
+      const raw = localStorage.getItem(VISITED_KEY);
+      if (!raw) return new Set();
+      const parsed = JSON.parse(raw);
+      return new Set(Array.isArray(parsed) ? parsed : []);
+    } catch { return new Set(); }
+  }
+  // Keep visited in sync if the user has the tracker open in another tab.
+  window.addEventListener("storage", (e) => {
+    if (e.key === VISITED_KEY) {
+      visited = loadVisited();
+      renderAll();
+    }
+  });
+  // Also refresh when returning to this tab, in case they just marked
+  // some spots visited in the tracker tab.
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      visited = loadVisited();
+      renderAll();
+    }
+  });
 
   // ===== DOM =====
   const tiersEl = document.getElementById("tiers");
@@ -549,18 +577,25 @@
   // Build a draggable, clickable chip for a restaurant.
   function makeCard(r) {
     const card = document.createElement("div");
-    card.className = "chip-card";
+    const isVisited = visited.has(r.name);
+    card.className = "chip-card" + (isVisited ? " visited" : "");
     card.draggable = true;
     card.dataset.name = r.name;
     card.setAttribute("role", "button");
     card.setAttribute("tabindex", "0");
     card.setAttribute(
       "aria-label",
-      `${r.name}, ${r.category}. ${tiers[r.name] ? "Ranked " + tiers[r.name] : "Unranked"}. Press to change.`
+      `${r.name}, ${r.category}. ${tiers[r.name] ? "Ranked " + tiers[r.name] : "Unranked"}.` +
+      ` ${isVisited ? "Visited." : "Not visited."} Press to change.`
     );
     card.innerHTML = `
       <div class="c-name">${escapeHtml(r.name)}</div>
       <div class="c-cat">${escapeHtml(r.category)}</div>
+      <span class="visited-mark" title="Visited" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </span>
     `;
 
     card.addEventListener("dragstart", (e) => {
@@ -601,13 +636,22 @@
       zone.appendChild(makeCard(r));
     }
 
-    // Pool: unranked (or all, if user chose "Show: All")
-    const poolList = sortedByName.filter(r => {
-      if (activeCategory !== "All" && r.category !== activeCategory) return false;
-      if (q && !r.name.toLowerCase().includes(q)) return false;
-      if (!showAll && TIERS.includes(tiers[r.name])) return false;
-      return true;
-    });
+    // Pool: unranked (or all, if user chose "Show: All").
+    // Visited spots float to the top so the user ranks first-hand
+    // experience before unfamiliar ones.
+    const poolList = sortedByName
+      .filter(r => {
+        if (activeCategory !== "All" && r.category !== activeCategory) return false;
+        if (q && !r.name.toLowerCase().includes(q)) return false;
+        if (!showAll && TIERS.includes(tiers[r.name])) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        const av = visited.has(a.name) ? 0 : 1;
+        const bv = visited.has(b.name) ? 0 : 1;
+        if (av !== bv) return av - bv;
+        return a.name.localeCompare(b.name);
+      });
 
     if (poolList.length === 0) {
       const empty = document.createElement("div");
